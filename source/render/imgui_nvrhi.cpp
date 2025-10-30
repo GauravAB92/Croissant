@@ -45,31 +45,11 @@ SOFTWARE.
 */
 
 #include <stddef.h>
-
+#include <render/imgui_nvrhi.h>
 #include <imgui.h>
-
 #include <nvrhi/nvrhi.h>
-#include <donut/engine/ShaderFactory.h>
-#include <donut/app/imgui_nvrhi.h>
-#include <donut/core/log.h>
+#include <core/log.h>
 
-#if DONUT_WITH_STATIC_SHADERS
-#if DONUT_WITH_DX11
-#include "compiled_shaders/imgui_vertex.dxbc.h"
-#include "compiled_shaders/imgui_pixel.dxbc.h"
-#endif
-#if DONUT_WITH_DX12
-#include "compiled_shaders/imgui_vertex.dxil.h"
-#include "compiled_shaders/imgui_pixel.dxil.h"
-#endif
-#if DONUT_WITH_VULKAN
-#include "compiled_shaders/imgui_vertex.spirv.h"
-#include "compiled_shaders/imgui_pixel.spirv.h"
-#endif
-#endif
-
-using namespace donut::engine;
-using namespace donut::app;
 
 struct VERTEX_CONSTANT_BUFFER
 {
@@ -120,20 +100,21 @@ bool ImGui_NVRHI::updateFontTexture()
     return true;
 }
 
-bool ImGui_NVRHI::init(nvrhi::IDevice* device, std::shared_ptr<ShaderFactory> shaderFactory)
+bool ImGui_NVRHI::init(nvrhi::IDevice* device, std::shared_ptr<vfs::RootFileSystem>& fs)
 {
     m_device = device;
 
     m_commandList = m_device->createCommandList();
 
-    vertexShader = shaderFactory->CreateAutoShader("donut/imgui_vertex", "main", DONUT_MAKE_PLATFORM_SHADER(g_imgui_vertex), nullptr, nvrhi::ShaderType::Vertex);
-    pixelShader = shaderFactory->CreateAutoShader("donut/imgui_pixel", "main", DONUT_MAKE_PLATFORM_SHADER(g_imgui_pixel), nullptr, nvrhi::ShaderType::Pixel);
+
+    CompileShaderFileNVRHI("shaders/imgui_vertex.hlsl", "main_vs", nvrhi::ShaderType::Vertex, nullptr, device, fs, vertexShader);
+    CompileShaderFileNVRHI("shaders/imgui_pixel.hlsl", "main_ps", nvrhi::ShaderType::Pixel, nullptr, device, fs, pixelShader);
     
     if (!vertexShader || !pixelShader)
     {
-        log::error("Failed to create an ImGUI shader");
+        logger::error("Failed to create an ImGUI shader");
         return false;
-    } 
+    }
 
     // create attribute layout object
     nvrhi::VertexAttributeDesc vertexAttribLayout[] = {
@@ -141,7 +122,7 @@ bool ImGui_NVRHI::init(nvrhi::IDevice* device, std::shared_ptr<ShaderFactory> sh
         { "TEXCOORD", nvrhi::Format::RG32_FLOAT,  1, 0, offsetof(ImDrawVert,uv),  sizeof(ImDrawVert), false },
         { "COLOR",    nvrhi::Format::RGBA8_UNORM, 1, 0, offsetof(ImDrawVert,col), sizeof(ImDrawVert), false },
     };
-
+              
     shaderAttribLayout = m_device->createInputLayout(vertexAttribLayout, sizeof(vertexAttribLayout) / sizeof(vertexAttribLayout[0]), vertexShader);
 
     // create PSO

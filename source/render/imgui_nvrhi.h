@@ -46,22 +46,13 @@ SOFTWARE.
 
 #pragma once
 
-#include <memory>
-#include <vector>
-#include <unordered_map>
-#include <stdint.h>
-
+#include <core/stdafx.h>
 #include <nvrhi/nvrhi.h>
-
 #include <imgui.h>
+#include <core/VFS.h>
+#include <render/backend/ShaderUtils.h>
 
-namespace donut::engine
-{
-    class ShaderFactory;
-}
 
-namespace donut::app
-{
     struct ImGui_NVRHI
     {
         nvrhi::DeviceHandle m_device;
@@ -86,7 +77,7 @@ namespace donut::app
         std::vector<ImDrawVert> vtxBuffer;
         std::vector<ImDrawIdx> idxBuffer;
 
-        bool init(nvrhi::IDevice* device, std::shared_ptr<engine::ShaderFactory> shaderFactory);
+        bool init(nvrhi::IDevice* device, std::shared_ptr<vfs::RootFileSystem>& fs);
         bool updateFontTexture();
         bool render(nvrhi::IFramebuffer* framebuffer);
         void backbufferResizing();
@@ -99,4 +90,3 @@ namespace donut::app
         nvrhi::IBindingSet* getBindingSet(nvrhi::ITexture* texture);
         bool updateGeometry(nvrhi::ICommandList* commandList);
     };
-}

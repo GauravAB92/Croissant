@@ -111,7 +111,7 @@ target_include_directories(framework_source PUBLIC
 
     "${CROISSANT_ROOT_DIR}/thirdparty/assimp/include"
     "${CROISSANT_ROOT_DIR}/thirdparty/glfw/include"
-    "${CROISSANT_ROOT_DIR}/thirdparty/glm"
+    "${CROISSANT_ROOT_DIR}/thirdparty/glm/glm"
     "${CROISSANT_ROOT_DIR}/thirdparty/imgui"
     "${CROISSANT_ROOT_DIR}/thirdparty/implot"
     "${DXC_INCLUDE_DIR}"

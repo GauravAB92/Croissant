@@ -41,10 +41,10 @@ TemporalAntiAliasingPass::TemporalAntiAliasingPass(nvrhi::IDevice* device, std::
 	}
 
 	//Compile motion vector shader
-	CompileShaderFileNVRHI("/shaders/TAA/motion_vector_generator_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_MotionVectorPS);
+	CompileShaderFileNVRHI("shaders/TAA/motion_vector_generator_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_MotionVectorPS);
 
 	//Compile taa resolve compute shader
-	CompileShaderFileNVRHI("/shaders/TAA/taa_resolve_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_TemporalAntiAliasingCS);
+	CompileShaderFileNVRHI("shaders/TAA/taa_resolve_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_TemporalAntiAliasingCS);
 
 	//Bilinear sampler for inverse reprojection
 	nvrhi::SamplerDesc samplerDesc;

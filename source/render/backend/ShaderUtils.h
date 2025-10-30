@@ -42,11 +42,11 @@ static bool CompileShaderFileNVRHIDXC(
 	sourceBuffer.Size = shaderData->size();
 	sourceBuffer.Encoding = DXC_CP_UTF8;                 // FIX: set UTF-8 explicitly
 
-	std::wstring eraaPath = vfs::getExecutablePath().parent_path().wstring() + L"/shaders/ERAA";
+	std::wstring eraaPath = vfs::getExecutablePath().parent_path().wstring() + L"/ERAA_DEMO/shaders/";
 	std::wstring commonPath = vfs::getExecutablePath().parent_path().wstring() + L"/shaders/common";
 
 	LPCWSTR targetProfile = L"";
-	switch (shadertype) {
+	switch (shadertype) { 
 	case nvrhi::ShaderType::Vertex:   targetProfile = L"vs_6_0"; break;
 	case nvrhi::ShaderType::Pixel:    targetProfile = L"ps_6_0"; break;
 	case nvrhi::ShaderType::Geometry: targetProfile = L"gs_6_0"; break;

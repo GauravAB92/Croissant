@@ -5,8 +5,8 @@
 CommonRenderPasses::CommonRenderPasses(nvrhi::IDevice* device, std::shared_ptr<vfs::RootFileSystem>& fs, uint32_t width, uint32_t height) : m_Device(device)
 {
 
-	CompileShaderFileNVRHI("/shaders/common/rect_vs.hlsl", "main", nvrhi::ShaderType::Vertex, nullptr, device, fs, m_RectVS);
-	CompileShaderFileNVRHI("/shaders/common/blit_ps.hlsl", "main", nvrhi::ShaderType::Pixel, nullptr, device, fs, m_BlitPS);
+	CompileShaderFileNVRHI("shaders/common/rect_vs.hlsl", "main", nvrhi::ShaderType::Vertex, nullptr, device, fs, m_RectVS);
+	CompileShaderFileNVRHI("shaders/common/blit_ps.hlsl", "main", nvrhi::ShaderType::Pixel, nullptr, device, fs, m_BlitPS);
 
 	auto samplerDesc = nvrhi::SamplerDesc()
 		.setAllFilters(false)

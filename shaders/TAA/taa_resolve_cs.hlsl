@@ -1,4 +1,4 @@
-#include "../common/taa_cb.h"
+#include "../Croissant/shaders/common/taa_cb.h"
 
 Texture2D<float4> g_unresolvedColor : register(t0);
 Texture2D<float2> g_motionVectors   : register(t1);

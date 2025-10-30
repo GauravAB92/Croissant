@@ -46,26 +46,21 @@ SOFTWARE.
 
 #pragma once
 
-#include <donut/app/DeviceManager.h>
-#include <donut/app/imgui_nvrhi.h>
+#include <core/stdafx.h>
+#include <render/backend/DeviceManager.h>
+#include <render/imgui_nvrhi.h>
 
-#include <filesystem>
-#include <memory>
-#include <optional>
-
-namespace donut::vfs
+namespace vfs
 {
     class IBlob;
     class IFileSystem;
 }
 
-namespace donut::engine
-{
-    class ShaderFactory;
-}
+#include <filesystem>
+#include <memory>
+#include <optional>
 
-namespace donut::app
-{
+
     class RegisteredFont
     {
     protected:
@@ -132,7 +127,7 @@ namespace donut::app
     public:
         ImGui_Renderer(DeviceManager *devManager);
         ~ImGui_Renderer();
-        bool Init(std::shared_ptr<engine::ShaderFactory> shaderFactory);
+        bool Init(std::shared_ptr<vfs::RootFileSystem>& fs);
 
         // Loads a TTF font from file and registers it with the ImGui_Renderer.
         // To use the font with ImGUI at runtime, call RegisteredFont::GetScaledFont().
@@ -159,7 +154,7 @@ namespace donut::app
         virtual void Render(nvrhi::IFramebuffer* framebuffer) override;
         virtual void BackBufferResizing() override;
         virtual void DisplayScaleChanged(float scaleX, float scaleY) override;
-        virtual bool ShouldAnimateUnfocused() override { return true; }
+      //  virtual bool ShouldAnimateUnfocused() override { return true; }
 
     protected:
         // creates the UI in ImGui, updates internal UI state
@@ -172,4 +167,3 @@ namespace donut::app
         std::shared_ptr<RegisteredFont> CreateFontFromMemoryInternal(void const* pData, size_t size,
             bool compressed, float fontSize);
     };
-}

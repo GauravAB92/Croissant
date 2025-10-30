@@ -44,14 +44,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <donut/app/imgui_renderer.h>
-#include <donut/core/vfs/VFS.h>
+#include <render/imgui_renderer.h>
+#include <core/VFS.h>
+#include <core/log.h>
 
-using namespace donut::vfs;
-using namespace donut::engine;
-using namespace donut::app;
+using namespace vfs;
 
-ImGui_Renderer::ImGui_Renderer(DeviceManager *devManager)
+
+ImGui_Renderer::ImGui_Renderer(DeviceManager* devManager)
     : IRenderPass(devManager)
     , m_supportExplicitDisplayScaling(devManager->GetDeviceParams().supportExplicitDisplayScaling)
 {
@@ -60,6 +60,7 @@ ImGui_Renderer::ImGui_Renderer(DeviceManager *devManager)
     m_defaultFont = std::make_shared<RegisteredFont>(13.f);
     m_fonts.push_back(m_defaultFont);
 }
+
 
 ImGui_Renderer::~ImGui_Renderer()
 {
@@ -205,22 +206,29 @@ static void ImGui_ImplGlfw_UpdateKeyModifiers(ImGuiIO& io, GLFWwindow* window)
     io.AddKeyEvent(ImGuiMod_Super, (glfwGetKey(window, GLFW_KEY_LEFT_SUPER)   == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_SUPER)   == GLFW_PRESS));
 }
 
-bool ImGui_Renderer::Init(std::shared_ptr<ShaderFactory> shaderFactory)
+
+bool ImGui_Renderer::Init(std::shared_ptr<vfs::RootFileSystem>& fs)
 {
     imgui_nvrhi = std::make_unique<ImGui_NVRHI>();
-    return imgui_nvrhi->init(GetDevice(), shaderFactory);
+    return imgui_nvrhi->init(GetDevice(), fs);
 }
 
 std::shared_ptr<RegisteredFont> ImGui_Renderer::CreateFontFromFile(IFileSystem& fs,
     const std::filesystem::path& fontFile, float fontSize)
 {
-	auto fontData = fs.readFile(fontFile);
-	if (!fontData)
-		return std::make_shared<RegisteredFont>();
+    auto fontData = fs.readFile(fontFile);
+    if (!fontData)
+    {
+        logger::error("Failed to read font file: %s", fontFile.string().c_str());
+        return std::make_shared<RegisteredFont>();
+    }
 
-	auto font = std::make_shared<RegisteredFont>(fontData, false, fontSize);
+    auto font = std::make_shared<RegisteredFont>(fontData, false, fontSize);
+    if (!font->HasFontData())
+    {
+        logger::error("Failed to create font from file: %s", fontFile.string().c_str());
+    }
     m_fonts.push_back(font);
-
     return font;
 }
 
