@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(GraphicsFramework)
+project(CroissantEngine VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,5 +37,5 @@ option(NVRHI_WITH_VULKAN "Enable NVRHI Vulkan backend" OFF)
 option(NVRHI_WITH_AFTERMATH "Enable NVRHI Aftermath support" OFF)
 
 
-add_subdirectory(nvrhi)
+add_subdirectory("${CMAKE_SOURCE_DIR}/nvrhi")
 include(framework_source.cmake)
