@@ -5,57 +5,40 @@
 set(CROISSANT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # ---------- DXC Setup ----------
-
 set(DXC_VERSION      "v1.8.2505")
-set(DXC_PLATFORM     "windows")   # or "linux"/"mac"
+set(DXC_PLATFORM     "windows")
 set(DXC_ARCH         "x64")
-set(DXC_ZIP_NAME     "dxc_${DXC_VERSION}_${DXC_PLATFORM}_${DXC_ARCH}.zip")
+set(DXC_ZIP_NAME     "dxc_1.8.2505_windows_x64.zip") # ✅ Correct asset name
 set(DXC_URL          "https://github.com/microsoft/DirectXShaderCompiler/releases/download/${DXC_VERSION}/${DXC_ZIP_NAME}")
 
-set(DXC_THIRDPARTY_DIR "${CROISSANT_ROOT_DIR}/thirdparty/dxc")
+set(DXC_THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/dxc")
 set(DXC_ZIP_PATH       "${DXC_THIRDPARTY_DIR}/${DXC_ZIP_NAME}")
 set(DXC_EXTRACT_DIR    "${DXC_THIRDPARTY_DIR}/package")
 
 file(MAKE_DIRECTORY "${DXC_THIRDPARTY_DIR}")
 
-if (NOT EXISTS "${DXC_ZIP_PATH}")
-    message(STATUS "Downloading DXC ${DXC_VERSION} into ${DXC_ZIP_PATH}…")
-    file(DOWNLOAD
-        "${DXC_URL}"
-        "${DXC_ZIP_PATH}"
-        SHOW_PROGRESS
-        STATUS _download_status
-    )
+# Download only if missing
+if(NOT EXISTS "${DXC_ZIP_PATH}")
+    message(STATUS "Downloading DXC ${DXC_VERSION} from ${DXC_URL}")
+    file(DOWNLOAD "${DXC_URL}" "${DXC_ZIP_PATH}" SHOW_PROGRESS STATUS _download_status)
     list(GET _download_status 0 _dl_code)
-    if (NOT _dl_code EQUAL 0)
-        message(FATAL_ERROR "DXC download failed: ${_download_status}")
+    if(NOT _dl_code EQUAL 0)
+        message(WARNING "DXC download failed: ${_download_status}")
+        message(WARNING "Please manually place ${DXC_ZIP_NAME} in ${DXC_THIRDPARTY_DIR}")
     endif()
 endif()
 
-if (NOT EXISTS "${DXC_EXTRACT_DIR}")
+# Extract if not already extracted
+if(EXISTS "${DXC_ZIP_PATH}" AND NOT EXISTS "${DXC_EXTRACT_DIR}/inc/dxcapi.h")
     message(STATUS "Extracting DXC package to ${DXC_EXTRACT_DIR}…")
     file(MAKE_DIRECTORY "${DXC_EXTRACT_DIR}")
-    file(ARCHIVE_EXTRACT
-        INPUT "${DXC_ZIP_PATH}"
-        DESTINATION "${DXC_EXTRACT_DIR}"
-    )
+    file(ARCHIVE_EXTRACT INPUT "${DXC_ZIP_PATH}" DESTINATION "${DXC_EXTRACT_DIR}")
 endif()
 
-set(DXC_BIN_DIR "${DXC_EXTRACT_DIR}/bin/${DXC_ARCH}")
-set(DXC_LIB_DIR "${DXC_EXTRACT_DIR}/lib/${DXC_ARCH}")
-set(DXC_INCLUDE_DIR "${DXC_EXTRACT_DIR}/inc")
+if(NOT EXISTS "${DXC_EXTRACT_DIR}/inc/dxcapi.h")
+    message(FATAL_ERROR "DXC extraction failed — please manually download ${DXC_ZIP_NAME} from ${DXC_URL}")
+endif()
 
-add_library(Microsoft::DXCompiler SHARED IMPORTED GLOBAL)
-set_target_properties(Microsoft::DXCompiler PROPERTIES
-    IMPORTED_IMPLIB "${DXC_LIB_DIR}/dxcompiler.lib"
-    IMPORTED_LOCATION "${DXC_BIN_DIR}/dxcompiler.dll"
-    INTERFACE_INCLUDE_DIRECTORIES "${DXC_INCLUDE_DIR}"
-)
-
-add_library(Microsoft::DXIL SHARED IMPORTED GLOBAL)
-set_target_properties(Microsoft::DXIL PROPERTIES
-    IMPORTED_LOCATION "${DXC_BIN_DIR}/dxil.dll"
-)
 
 # ---------- Framework Sources ----------
 
