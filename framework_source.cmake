@@ -103,6 +103,11 @@ target_include_directories(framework_source PUBLIC
     "${CROISSANT_ROOT_DIR}/source"
     "${CROISSANT_ROOT_DIR}/thirdparty"
     "${CROISSANT_ROOT_DIR}/nvrhi/include"
+
+    # 🧩 Include NVRHI's bundled headers FIRST to override old Windows SDK headers
+    "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
+    "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
+
     "${CROISSANT_ROOT_DIR}/thirdparty/assimp/include"
     "${CROISSANT_ROOT_DIR}/thirdparty/glfw/include"
     "${CROISSANT_ROOT_DIR}/thirdparty/glm"
