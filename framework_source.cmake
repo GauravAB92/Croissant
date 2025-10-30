@@ -41,6 +41,30 @@ if(NOT EXISTS "${DXC_EXTRACT_DIR}/inc/dxcapi.h")
 endif()
 
 
+# --------------------------------------------------------------------------
+# DXC IMPORTED TARGET SETUP (ensure target exists)
+# --------------------------------------------------------------------------
+
+if(EXISTS "${DXC_LIB_DIR}/dxcompiler.lib" AND EXISTS "${DXC_BIN_DIR}/dxcompiler.dll")
+    if(NOT TARGET Microsoft::DXCompiler)
+        add_library(Microsoft::DXCompiler SHARED IMPORTED GLOBAL)
+        set_target_properties(Microsoft::DXCompiler PROPERTIES
+            IMPORTED_IMPLIB         "${DXC_LIB_DIR}/dxcompiler.lib"
+            IMPORTED_LOCATION       "${DXC_BIN_DIR}/dxcompiler.dll"
+            INTERFACE_INCLUDE_DIRECTORIES "${DXC_INCLUDE_DIR}"
+        )
+    endif()
+
+    if(NOT TARGET Microsoft::DXIL AND EXISTS "${DXC_BIN_DIR}/dxil.dll")
+        add_library(Microsoft::DXIL SHARED IMPORTED GLOBAL)
+        set_target_properties(Microsoft::DXIL PROPERTIES
+            IMPORTED_LOCATION       "${DXC_BIN_DIR}/dxil.dll"
+        )
+    endif()
+else()
+    message(WARNING "⚠️ DXC binaries not found — Microsoft::DXCompiler target will not be linked.")
+endif()
+
 # ---------- Framework Sources ----------
 
 set(FRAMEWORK_SOURCE_DIR "${CROISSANT_ROOT_DIR}/source")
