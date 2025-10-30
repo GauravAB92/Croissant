@@ -8,9 +8,10 @@ set(CROISSANT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 # -------------------------------------------------------------------------
 # DXC Setup
 # -------------------------------------------------------------------------
-set(DXC_VERSION      "v2025_05_24")
+set(DXC_VERSION      "v1.8.2505")
 set(DXC_ZIP_NAME     "dxc_2025_05_24.zip")
 set(DXC_URL          "https://github.com/microsoft/DirectXShaderCompiler/releases/download/${DXC_VERSION}/${DXC_ZIP_NAME}")
+
 
 set(DXC_THIRDPARTY_DIR "${CROISSANT_ROOT_DIR}/thirdparty/dxc")
 set(DXC_ZIP_PATH       "${DXC_THIRDPARTY_DIR}/${DXC_ZIP_NAME}")
@@ -104,18 +105,9 @@ target_include_directories(framework_source PUBLIC
     "${CROISSANT_ROOT_DIR}/thirdparty"
     "${CROISSANT_ROOT_DIR}/nvrhi/include"
 
-   # Force these critical headers to be treated as *regular* includes, not /external:I
-if (MSVC)
-    target_compile_options(framework_source PUBLIC
-        "/I${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
-        "/I${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
-    )
-else()
-    target_include_directories(framework_source BEFORE PUBLIC
-        "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
-        "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
-    )
-endif()
+    # 🧩 Include NVRHI's bundled headers FIRST to override old Windows SDK headers
+    "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
+    "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
 
     "${CROISSANT_ROOT_DIR}/thirdparty/assimp/include"
     "${CROISSANT_ROOT_DIR}/thirdparty/glfw/include"
