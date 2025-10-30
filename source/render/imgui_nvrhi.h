@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014-2021, NVIDIA CORPORATION. All rights reserved.
+* Copyright (c) 2014-2025, NVIDIA CORPORATION. All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 /*
 License for Dear ImGui
 
-Copyright (c) 2014-2019 Omar Cornut
+Copyright (c) 2014-2025 Omar Cornut
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,47 +46,57 @@ SOFTWARE.
 
 #pragma once
 
-#include <core/stdafx.h>
+#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <stdint.h>
+
 #include <nvrhi/nvrhi.h>
+
 #include <imgui.h>
-#include <core/VFS.h>
-#include <render/backend/ShaderUtils.h>
 
-
-struct ImGui_NVRHI
+namespace donut::engine
 {
-	nvrhi::DeviceHandle m_device;
-	nvrhi::CommandListHandle m_commandList;
+    class ShaderFactory;
+}
 
-	nvrhi::ShaderHandle vertexShader;
-	nvrhi::ShaderHandle pixelShader;
-	nvrhi::InputLayoutHandle shaderAttribLayout;
+namespace donut::app
+{
+    struct ImGui_NVRHI
+    {
+        nvrhi::DeviceHandle m_device;
+        nvrhi::CommandListHandle m_commandList;
 
-	nvrhi::TextureHandle fontTexture;
-	nvrhi::SamplerHandle fontSampler;
+        nvrhi::ShaderHandle vertexShader;
+        nvrhi::ShaderHandle pixelShader;
+        nvrhi::InputLayoutHandle shaderAttribLayout;
 
-	nvrhi::BufferHandle vertexBuffer;
-	nvrhi::BufferHandle indexBuffer;
+        nvrhi::TextureHandle fontTexture;
+        nvrhi::SamplerHandle fontSampler;
 
-	nvrhi::BindingLayoutHandle bindingLayout;
-	nvrhi::GraphicsPipelineDesc basePSODesc;
+        nvrhi::BufferHandle vertexBuffer;
+        nvrhi::BufferHandle indexBuffer;
 
-	nvrhi::GraphicsPipelineHandle pso;
-	std::unordered_map<nvrhi::ITexture*, nvrhi::BindingSetHandle> bindingsCache;
+        nvrhi::BindingLayoutHandle bindingLayout;
+        nvrhi::GraphicsPipelineDesc basePSODesc;
 
-	std::vector<ImDrawVert> vtxBuffer;
-	std::vector<ImDrawIdx> idxBuffer;
+        nvrhi::GraphicsPipelineHandle pso;
+        std::unordered_map<nvrhi::ITexture*, nvrhi::BindingSetHandle> bindingsCache;
 
-	bool init(nvrhi::IDevice* device, std::shared_ptr<vfs::RootFileSystem>& fs);
-	bool updateFontTexture();
-	bool render(nvrhi::IFramebuffer* framebuffer);
-	void backbufferResizing();
+        std::vector<ImDrawVert> vtxBuffer;
+        std::vector<ImDrawIdx> idxBuffer;
 
-private:
-	bool reallocateBuffer(nvrhi::BufferHandle& buffer, size_t requiredSize, size_t reallocateSize, bool isIndexBuffer);
+        bool init(nvrhi::IDevice* device, std::shared_ptr<engine::ShaderFactory> shaderFactory);
+        bool updateFontTexture();
+        bool render(nvrhi::IFramebuffer* framebuffer);
+        void backbufferResizing();
+
+    private:
+        bool reallocateBuffer(nvrhi::BufferHandle& buffer, size_t requiredSize, size_t reallocateSize, bool isIndexBuffer);
 
 
-	nvrhi::IGraphicsPipeline* getPSO(nvrhi::IFramebuffer* fb);
-	nvrhi::IBindingSet* getBindingSet(nvrhi::ITexture* texture);
-	bool updateGeometry(nvrhi::ICommandList* commandList);
-};
+        nvrhi::IGraphicsPipeline* getPSO(nvrhi::FramebufferInfo const& framebufferInfo);
+        nvrhi::IBindingSet* getBindingSet(nvrhi::ITexture* texture);
+        bool updateGeometry(nvrhi::ICommandList* commandList);
+    };
+}

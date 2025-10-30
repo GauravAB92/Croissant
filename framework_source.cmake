@@ -104,9 +104,18 @@ target_include_directories(framework_source PUBLIC
     "${CROISSANT_ROOT_DIR}/thirdparty"
     "${CROISSANT_ROOT_DIR}/nvrhi/include"
 
-    # 🧩 Include NVRHI's bundled headers FIRST to override old Windows SDK headers
-    "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
-    "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
+   # Force these critical headers to be treated as *regular* includes, not /external:I
+if (MSVC)
+    target_compile_options(framework_source PUBLIC
+        "/I${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
+        "/I${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
+    )
+else()
+    target_include_directories(framework_source BEFORE PUBLIC
+        "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/DirectX-Headers/include"
+        "${CROISSANT_ROOT_DIR}/nvrhi/thirdparty/Vulkan-Headers/include"
+    )
+endif()
 
     "${CROISSANT_ROOT_DIR}/thirdparty/assimp/include"
     "${CROISSANT_ROOT_DIR}/thirdparty/glfw/include"

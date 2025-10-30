@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014-2021, NVIDIA CORPORATION. All rights reserved.
+* Copyright (c) 2014-2025, NVIDIA CORPORATION. All rights reserved.
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 /*
 License for Dear ImGui
 
-Copyright (c) 2014-2019 Omar Cornut
+Copyright (c) 2014-2025 Omar Cornut
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,11 +44,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <render/imgui_nvrhi.h>
-#include <imgui.h>
-#include <nvrhi/nvrhi.h>
-#include <core/log.h>
+#include <stddef.h>
 
+#include <imgui.h>
+
+#include <nvrhi/nvrhi.h>
+#include <donut/engine/ShaderFactory.h>
+#include <donut/app/imgui_nvrhi.h>
+#include <donut/core/log.h>
+
+#if DONUT_WITH_STATIC_SHADERS
+#if DONUT_WITH_DX11
+#include "compiled_shaders/imgui_vertex.dxbc.h"
+#include "compiled_shaders/imgui_pixel.dxbc.h"
+#endif
+#if DONUT_WITH_DX12
+#include "compiled_shaders/imgui_vertex.dxil.h"
+#include "compiled_shaders/imgui_pixel.dxil.h"
+#endif
+#if DONUT_WITH_VULKAN
+#include "compiled_shaders/imgui_vertex.spirv.h"
+#include "compiled_shaders/imgui_pixel.spirv.h"
+#endif
+#endif
+
+using namespace donut::engine;
+using namespace donut::app;
 
 struct VERTEX_CONSTANT_BUFFER
 {
@@ -60,8 +81,8 @@ bool ImGui_NVRHI::updateFontTexture()
     ImGuiIO& io = ImGui::GetIO();
 
     // If the font texture exists and is bound to ImGui, we're done.
-    // Note: ImGui_Renderer will reset io.Fonts->TexID when new fonts are added.
-    if (fontTexture && io.Fonts->TexID)
+    // Note: ImGui_Renderer will reset io.Fonts->TexRef when new fonts are added.
+    if (fontTexture && io.Fonts->TexRef.GetTexID())
         return true;
 
     unsigned char *pixels;
@@ -94,23 +115,23 @@ bool ImGui_NVRHI::updateFontTexture()
     m_commandList->close();
     m_device->executeCommandList(m_commandList);
 
-    io.Fonts->TexID = fontTexture;
+    io.Fonts->TexRef = ImTextureRef(fontTexture.Get());
 
     return true;
 }
 
-bool ImGui_NVRHI::init(nvrhi::IDevice* device , std::shared_ptr<vfs::RootFileSystem>& fs)
+bool ImGui_NVRHI::init(nvrhi::IDevice* device, std::shared_ptr<ShaderFactory> shaderFactory)
 {
     m_device = device;
 
     m_commandList = m_device->createCommandList();
 
-    CompileShaderFileNVRHI("/shaders/imgui_vertex.hlsl", "main_vs", nvrhi::ShaderType::Vertex, nullptr, device, fs, vertexShader);
-	CompileShaderFileNVRHI("/shaders/imgui_pixel.hlsl", "main_ps", nvrhi::ShaderType::Pixel, nullptr, device, fs, pixelShader);
-
+    vertexShader = shaderFactory->CreateAutoShader("donut/imgui_vertex", "main", DONUT_MAKE_PLATFORM_SHADER(g_imgui_vertex), nullptr, nvrhi::ShaderType::Vertex);
+    pixelShader = shaderFactory->CreateAutoShader("donut/imgui_pixel", "main", DONUT_MAKE_PLATFORM_SHADER(g_imgui_pixel), nullptr, nvrhi::ShaderType::Pixel);
+    
     if (!vertexShader || !pixelShader)
     {
-        logger::error("Failed to create an ImGUI shader");
+        log::error("Failed to create an ImGUI shader");
         return false;
     } 
 
@@ -157,7 +178,6 @@ bool ImGui_NVRHI::init(nvrhi::IDevice* device , std::shared_ptr<vfs::RootFileSys
             nvrhi::BindingLayoutItem::Sampler(0) 
         };
         bindingLayout = m_device->createBindingLayout(layoutDesc);
-
 
         basePSODesc.primType = nvrhi::PrimitiveType::TriangleList;
         basePSODesc.inputLayout = shaderAttribLayout;
@@ -208,13 +228,13 @@ bool ImGui_NVRHI::reallocateBuffer(nvrhi::BufferHandle& buffer, size_t requiredS
     return true;
 }
 
-nvrhi::IGraphicsPipeline* ImGui_NVRHI::getPSO(nvrhi::IFramebuffer* fb)
+nvrhi::IGraphicsPipeline* ImGui_NVRHI::getPSO(nvrhi::FramebufferInfo const& framebufferInfo)
 {
     if (pso)
         return pso;
 
-    pso = m_device->createGraphicsPipeline(basePSODesc, fb);
-    assert(pso != nullptr && "Failed to create ImGui pipeline");
+    pso = m_device->createGraphicsPipeline(basePSODesc, framebufferInfo);
+    assert(pso);
 
     return pso;
 }
@@ -313,7 +333,7 @@ bool ImGui_NVRHI::render(nvrhi::IFramebuffer* framebuffer)
     drawState.framebuffer = framebuffer;
     assert(drawState.framebuffer);
     
-    drawState.pipeline = getPSO(drawState.framebuffer);
+    drawState.pipeline = getPSO(framebuffer->getFramebufferInfo());
 
     drawState.viewport.viewports.push_back(nvrhi::Viewport(io.DisplaySize.x * io.DisplayFramebufferScale.x,
                                            io.DisplaySize.y * io.DisplayFramebufferScale.y));
@@ -343,7 +363,7 @@ bool ImGui_NVRHI::render(nvrhi::IFramebuffer* framebuffer)
             {
                 pCmd->UserCallback(cmdList, pCmd);
             } else {
-                drawState.bindings = { getBindingSet((nvrhi::ITexture*)pCmd->TextureId) };
+                drawState.bindings = { getBindingSet((nvrhi::ITexture*)pCmd->TexRef.GetTexID()) };
                 assert(drawState.bindings[0]);
 
                 drawState.viewport.scissorRects[0] = nvrhi::Rect(int(pCmd->ClipRect.x),
