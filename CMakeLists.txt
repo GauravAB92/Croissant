@@ -41,7 +41,7 @@ option(NVRHI_WITH_AFTERMATH "Enable NVRHI Aftermath support" OFF)
 # -----------------------------------------------------
 # Subdirectories
 # -----------------------------------------------------
-add_subdirectory(source)
+include(framework_source.cmake)
 add_subdirectory(thirdparty)
 add_subdirectory(nvrhi)
 
