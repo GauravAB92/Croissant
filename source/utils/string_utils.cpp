@@ -1,0 +1,122 @@
+/*
+* Copyright (c) 2014-2021, NVIDIA CORPORATION. All rights reserved.
+*
+* Permission is hereby granted, free of charge, to any person obtaining a
+* copy of this software and associated documentation files (the "Software"),
+* to deal in the Software without restriction, including without limitation
+* the rights to use, copy, modify, merge, publish, distribute, sublicense,
+* and/or sell copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*/
+
+#include <utils/string_utils.h>
+#include <cstring>
+#include <glm.hpp>
+
+namespace string_utils
+{
+	template <> long sto_number(std::string const& s) 
+	{ 
+		return std::stol(s, nullptr, 0); 
+	}
+	
+	template <> float sto_number(std::string const& s) 
+	{ 
+		return std::stof(s); 
+	
+	}
+
+	template <> double sto_number(std::string const& s)
+	{ 
+		return std::stod(s); 
+	}
+
+	template <> std::optional<bool> from_string(std::string const& s) 
+	{ 
+		return stob(s); 
+	}
+
+	template <> std::optional<float> parse(std::string_view s)
+	{
+		trim(s);
+		trim(s, '+');
+
+		char buf[32];
+		buf[sizeof(buf) - 1] = 0;
+		strncpy(buf, s.data(), std::min(s.size(), sizeof(buf) - 1));
+		char* endptr = buf;
+		float value = strtof(buf, &endptr);
+
+		if (endptr == buf)
+			return std::optional<float>();
+
+		return value;
+	}
+
+	template <> std::optional<double> parse(std::string_view s)
+	{
+		trim(s);
+		trim(s, '+');
+
+		char buf[32];
+		buf[sizeof(buf) - 1] = 0;
+		strncpy(buf, s.data(), std::min(s.size(), sizeof(buf) - 1));
+		char* endptr = buf;
+		double value = strtod(buf, &endptr);
+
+		if (endptr == buf)
+			return std::optional<double>();
+
+		return value;
+	}
+
+	template <> std::optional<bool> parse<bool>(std::string_view s) 
+	{
+		return stob(s); 
+	}
+
+	template <> std::optional<std::string_view> parse<std::string_view>(std::string_view s)
+	{
+		trim(s);
+		trim(s, '"');
+		return s;
+	}
+
+	template <> std::optional<std::string> parse<std::string>(std::string_view s)
+	{
+		if (auto r = parse<std::string_view>(s))
+			return std::string(*r);
+		return std::nullopt;
+	}
+
+
+	template <> std::optional<glm::bvec2> parse(std::string_view s) { return parse_vector<glm::bvec2>(s); }
+	template <> std::optional<glm::bvec3> parse(std::string_view s) { return parse_vector<glm::bvec3>(s); }
+	template <> std::optional<glm::bvec4> parse(std::string_view s) { return parse_vector<glm::bvec4>(s); }
+
+	template <> std::optional<glm::ivec2> parse(std::string_view s) { return parse_vector<glm::ivec2>(s); }
+	template <> std::optional<glm::ivec3> parse(std::string_view s) { return parse_vector<glm::ivec3>(s); }
+	template <> std::optional<glm::ivec4> parse(std::string_view s) { return parse_vector<glm::ivec4>(s); }
+
+	template <> std::optional<glm::uvec2> parse(std::string_view s) { return parse_vector<glm::uvec2>(s); }
+	template <> std::optional<glm::uvec3> parse(std::string_view s) { return parse_vector<glm::uvec3>(s); }
+	template <> std::optional<glm::uvec4> parse(std::string_view s) { return parse_vector<glm::uvec4>(s); }
+
+	template <> std::optional<glm::vec2> parse(std::string_view s) { return parse_vector<glm::vec2>(s); }
+	template <> std::optional<glm::vec3> parse(std::string_view s) { return parse_vector<glm::vec3>(s); }
+	template <> std::optional<glm::vec4> parse(std::string_view s) { return parse_vector<glm::vec4>(s); }
+
+
+} // end namespace donut::string_utils
+
