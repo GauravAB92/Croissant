@@ -5,10 +5,8 @@
 set(CROISSANT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # ---------- DXC Setup ----------
-set(DXC_VERSION      "v1.8.2505")
-set(DXC_PLATFORM     "windows")
-set(DXC_ARCH         "x64")
-set(DXC_ZIP_NAME     "dxc_1.8.2505_windows_x64.zip") # ✅ Correct asset name
+set(DXC_VERSION      "2025_05_24")
+set(DXC_ZIP_NAME     "dxc_${DXC_VERSION}.zip")
 set(DXC_URL          "https://github.com/microsoft/DirectXShaderCompiler/releases/download/${DXC_VERSION}/${DXC_ZIP_NAME}")
 
 set(DXC_THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/dxc")
@@ -17,26 +15,29 @@ set(DXC_EXTRACT_DIR    "${DXC_THIRDPARTY_DIR}/package")
 
 file(MAKE_DIRECTORY "${DXC_THIRDPARTY_DIR}")
 
-# Download only if missing
+# Download DXC if missing
 if(NOT EXISTS "${DXC_ZIP_PATH}")
-    message(STATUS "Downloading DXC ${DXC_VERSION} from ${DXC_URL}")
-    file(DOWNLOAD "${DXC_URL}" "${DXC_ZIP_PATH}" SHOW_PROGRESS STATUS _download_status)
+    message(STATUS "Downloading DXC ${DXC_VERSION} into ${DXC_ZIP_PATH}…")
+    file(DOWNLOAD
+        "${DXC_URL}"
+        "${DXC_ZIP_PATH}"
+        SHOW_PROGRESS
+        STATUS _download_status
+    )
     list(GET _download_status 0 _dl_code)
     if(NOT _dl_code EQUAL 0)
-        message(WARNING "DXC download failed: ${_download_status}")
-        message(WARNING "Please manually place ${DXC_ZIP_NAME} in ${DXC_THIRDPARTY_DIR}")
+        message(FATAL_ERROR "DXC download failed: ${_download_status}")
     endif()
 endif()
 
-# Extract if not already extracted
-if(EXISTS "${DXC_ZIP_PATH}" AND NOT EXISTS "${DXC_EXTRACT_DIR}/inc/dxcapi.h")
+# Extract package if missing
+if(NOT EXISTS "${DXC_EXTRACT_DIR}/inc/dxcapi.h")
     message(STATUS "Extracting DXC package to ${DXC_EXTRACT_DIR}…")
     file(MAKE_DIRECTORY "${DXC_EXTRACT_DIR}")
-    file(ARCHIVE_EXTRACT INPUT "${DXC_ZIP_PATH}" DESTINATION "${DXC_EXTRACT_DIR}")
-endif()
-
-if(NOT EXISTS "${DXC_EXTRACT_DIR}/inc/dxcapi.h")
-    message(FATAL_ERROR "DXC extraction failed — please manually download ${DXC_ZIP_NAME} from ${DXC_URL}")
+    file(ARCHIVE_EXTRACT
+        INPUT "${DXC_ZIP_PATH}"
+        DESTINATION "${DXC_EXTRACT_DIR}"
+    )
 endif()
 
 
