@@ -5,10 +5,9 @@
 set(CROISSANT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # ---------- DXC Setup ----------
-set(DXC_VERSION      "v2025_05_24")
-set(DXC_ZIP_NAME     "dxc_${DXC_VERSION}.zip")
+set(DXC_VERSION      "v1.8.2505")
+set(DXC_ZIP_NAME     "dxc_2025_05_24.zip")
 set(DXC_URL          "https://github.com/microsoft/DirectXShaderCompiler/releases/download/${DXC_VERSION}/${DXC_ZIP_NAME}")
-
 
 set(DXC_THIRDPARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/dxc")
 set(DXC_ZIP_PATH       "${DXC_THIRDPARTY_DIR}/${DXC_ZIP_NAME}")
