@@ -42,8 +42,11 @@ endif()
 
 
 # --------------------------------------------------------------------------
-# DXC IMPORTED TARGET SETUP (ensure target exists)
+# Ensure DXC imported targets exist
 # --------------------------------------------------------------------------
+set(DXC_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/dxc/package/bin/x64")
+set(DXC_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/dxc/package/lib/x64")
+set(DXC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/dxc/package/inc")
 
 if(EXISTS "${DXC_LIB_DIR}/dxcompiler.lib" AND EXISTS "${DXC_BIN_DIR}/dxcompiler.dll")
     if(NOT TARGET Microsoft::DXCompiler)
@@ -54,15 +57,15 @@ if(EXISTS "${DXC_LIB_DIR}/dxcompiler.lib" AND EXISTS "${DXC_BIN_DIR}/dxcompiler.
             INTERFACE_INCLUDE_DIRECTORIES "${DXC_INCLUDE_DIR}"
         )
     endif()
-
-    if(NOT TARGET Microsoft::DXIL AND EXISTS "${DXC_BIN_DIR}/dxil.dll")
-        add_library(Microsoft::DXIL SHARED IMPORTED GLOBAL)
-        set_target_properties(Microsoft::DXIL PROPERTIES
-            IMPORTED_LOCATION       "${DXC_BIN_DIR}/dxil.dll"
-        )
-    endif()
 else()
-    message(WARNING "⚠️ DXC binaries not found — Microsoft::DXCompiler target will not be linked.")
+    message(WARNING "⚠️ DXC binaries not found: ${DXC_LIB_DIR}/dxcompiler.lib or ${DXC_BIN_DIR}/dxcompiler.dll")
+endif()
+
+if(EXISTS "${DXC_BIN_DIR}/dxil.dll" AND NOT TARGET Microsoft::DXIL)
+    add_library(Microsoft::DXIL SHARED IMPORTED GLOBAL)
+    set_target_properties(Microsoft::DXIL PROPERTIES
+        IMPORTED_LOCATION "${DXC_BIN_DIR}/dxil.dll"
+    )
 endif()
 
 # ---------- Framework Sources ----------
