@@ -39,5 +39,3 @@ option(NVRHI_WITH_AFTERMATH "Enable NVRHI Aftermath support" OFF)
 
 add_subdirectory(nvrhi)
 include(framework_source.cmake)
-add_subdirectory(TEST_DEMO)
-add_subdirectory(ERAA_DEMO)
