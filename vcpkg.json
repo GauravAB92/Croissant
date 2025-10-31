@@ -1,0 +1,15 @@
+{
+  "name": "croissant-framework",
+  "version-string": "1.0.0",
+  "builtin-baseline": "df4c9b8f8a6a89a4e2e12c0e4b8a4ed1a7e3b5da",
+  "dependencies": [
+    "glm",
+    "glfw3",
+    "assimp",
+    "taskflow",
+    "tinyxml2"
+  ],
+  "features": {
+    "default": []
+  }
+}
