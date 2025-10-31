@@ -30,7 +30,7 @@
 #include <string_view>
 #include <vector>
 #include <regex>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 // A set of thread-safe string manipulation functions
 

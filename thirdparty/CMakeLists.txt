@@ -44,29 +44,3 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assimp/CMakeLists.txt")
 else()
     message(WARNING "Assimp not found — skipping.")
 endif()
-
-# -------------------------------------------------------------------------
-# GLFW
-# -------------------------------------------------------------------------
-option(GLFW_BUILD_EXAMPLES "GLFW examples" OFF)
-option(GLFW_BUILD_TESTS "GLFW tests" OFF)
-option(GLFW_BUILD_DOCS "GLFW docs" OFF)
-option(GLFW_INSTALL "GLFW install" OFF)
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/glfw/CMakeLists.txt")
-    add_subdirectory(glfw)
-    set_target_properties(glfw PROPERTIES FOLDER ${third_party_folder})
-    set_target_properties(update_mappings PROPERTIES FOLDER ${third_party_folder})
-else()
-    message(WARNING "GLFW not found — skipping.")
-endif()
-
-# -------------------------------------------------------------------------
-# GLM
-# -------------------------------------------------------------------------
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/glm/CMakeLists.txt")
-    add_subdirectory(glm)
-    set_target_properties(glm PROPERTIES FOLDER ${third_party_folder})
-else()
-    message(WARNING "GLM not found — skipping.")
-endif()

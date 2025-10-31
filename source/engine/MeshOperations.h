@@ -5,7 +5,7 @@
 #include <assimp/scene.h>
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/LogStream.hpp>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <core/log.h>
 
 namespace croissant

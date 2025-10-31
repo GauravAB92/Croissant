@@ -1,6 +1,6 @@
 #pragma once
 #include <render/backend/DeviceManager.h>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <memory>
 #include <core/VFS.h>
 #include <render/backend/ShaderUtils.h>

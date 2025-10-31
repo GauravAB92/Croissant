@@ -22,7 +22,7 @@
 
 #include <utils/string_utils.h>
 #include <cstring>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 namespace string_utils
 {
