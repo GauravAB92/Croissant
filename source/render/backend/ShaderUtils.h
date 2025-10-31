@@ -4,7 +4,7 @@
 #include <nvrhi/nvrhi.h>	
 #include <wrl/client.h>
 #include <dxcapi.h>
-#include <dxc/package/inc/d3d12shader.h>
+#include <d3d12shader.h>
 #include <core/stdafx.h>
 #include <core/VFS.h>
 

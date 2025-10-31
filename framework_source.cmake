@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Always anchor paths relative to this file
 get_filename_component(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTORY)
-set(CROISSANT_ROOT_DIR "${PROJECT_ROOT_DIR}")
+set(CROISSANT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # -------------------------------------------------------------------------
 # DXC Setup (Windows-only)
@@ -102,7 +102,8 @@ target_include_directories(framework_source PUBLIC
     "${NVRHI_DIR}/thirdparty/Vulkan-Headers/include"
     "${THIRDPARTY_DIR}/imgui"
     "${THIRDPARTY_DIR}/implot"
-    $<$<BOOL:WIN32>:"${DXC_INCLUDE_DIR}">
+    "${THIRDPARTY_DIR}/assimp/include"
+    $<$<BOOL:WIN32>:${DXC_INCLUDE_DIR}>
 )
 
 # -------------------------------------------------------------------------
@@ -115,8 +116,7 @@ target_link_libraries(framework_source PUBLIC
     glm::glm
     glfw
     assimp::assimp
-    tinyxml2::tinyxml2
-    taskflow
+    Taskflow::Taskflow
 )
 
 if(WIN32 AND NVRHI_WITH_DX12)

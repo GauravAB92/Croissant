@@ -7,7 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/LogStream.hpp>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <core/log.h>
 #include <nvrhi/nvrhi.h>
 #include <unordered_map>

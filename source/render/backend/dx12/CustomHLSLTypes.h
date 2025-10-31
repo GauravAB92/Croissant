@@ -1,7 +1,7 @@
 #ifndef CUSTOM_HLSL_TYPEDEF_H
 #define CUSTOM_HLSL_TYPEDEF_H
-#include <glm.hpp>
-#include <gtc/quaternion.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 // Custom HLSL type definitions for use in C++ with glm
 

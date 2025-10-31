@@ -1,13 +1,42 @@
 cmake_minimum_required(VERSION 3.20)
 
 # --------------------------------------------------------------------
-# vcpkg Auto-Bootstrap and Toolchain Setup (must come BEFORE project())
+# Detect standalone vs submodule mode
 # --------------------------------------------------------------------
-include(cmake/BootstrapVcpkg.cmake)
+set(_is_top_level OFF)
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(_is_top_level ON)
+endif()
 
-# Use vcpkg's toolchain file if available
-set(CMAKE_TOOLCHAIN_FILE "${VCPKG_TOOLCHAIN_FILE}" CACHE FILEPATH "vcpkg toolchain file")
-set(VCPKG_FEATURE_FLAGS "manifests")
+# --------------------------------------------------------------------
+# vcpkg Setup
+# --------------------------------------------------------------------
+if(_is_top_level)
+    # ✅ Standalone mode: bootstrap and activate vcpkg
+    include("${CMAKE_CURRENT_SOURCE_DIR}/BootstrapVcpkg.cmake")
+
+    set(CMAKE_TOOLCHAIN_FILE
+        "${VCPKG_TOOLCHAIN_FILE}"
+        CACHE FILEPATH "vcpkg toolchain file" FORCE
+    )
+
+    # Enable manifest mode
+    set(VCPKG_FEATURE_FLAGS "manifests,registries")
+    set(ENV{VCPKG_FEATURE_FLAGS} "manifests,registries")
+    set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(ENV{VCPKG_MANIFEST_DIR} "${VCPKG_MANIFEST_DIR}")
+else()
+    # ✅ Submodule mode: if vcpkg toolchain wasn’t inherited, inject local prefix manually
+    if(NOT DEFINED CMAKE_PREFIX_PATH OR CMAKE_PREFIX_PATH STREQUAL "")
+        set(_vcpkg_prefix "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/x64-windows/share")
+        if(EXISTS "${_vcpkg_prefix}")
+            message(STATUS "🔧 Submodule mode: adding vcpkg prefix ${_vcpkg_prefix}")
+            list(APPEND CMAKE_PREFIX_PATH "${_vcpkg_prefix}")
+        else()
+            message(WARNING "⚠️ vcpkg prefix not found at ${_vcpkg_prefix}")
+        endif()
+    endif()
+endif()
 
 # --------------------------------------------------------------------
 # Project Definition
@@ -52,20 +81,29 @@ option(NVRHI_WITH_VULKAN "Enable NVRHI Vulkan backend" OFF)
 option(NVRHI_WITH_AFTERMATH "Enable NVRHI Aftermath support" OFF)
 
 # --------------------------------------------------------------------
-# Dependencies (via vcpkg manifest mode)
+# Debug Info
+# --------------------------------------------------------------------
+message(STATUS "======== vcpkg DEBUG INFO ========")
+message(STATUS "CMAKE_SOURCE_DIR         = ${CMAKE_SOURCE_DIR}")
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "VCPKG_TOOLCHAIN_FILE     = ${VCPKG_TOOLCHAIN_FILE}")
+message(STATUS "VCPKG_MANIFEST_DIR       = ${VCPKG_MANIFEST_DIR}")
+message(STATUS "CMAKE_PREFIX_PATH        = ${CMAKE_PREFIX_PATH}")
+message(STATUS "==============================")
+
+# --------------------------------------------------------------------
+# Dependencies (via vcpkg)
 # --------------------------------------------------------------------
 find_package(glm CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
-find_package(assimp CONFIG REQUIRED)
 find_package(taskflow CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 
 # --------------------------------------------------------------------
 # Submodules (source-based)
 # --------------------------------------------------------------------
-add_subdirectory(thirdparty/imgui)
-add_subdirectory(thirdparty/implot)
-add_subdirectory(thirdparty/nvrhi)
+add_subdirectory(thirdparty)
+add_subdirectory(nvrhi)
 
 # --------------------------------------------------------------------
 # Framework Source
@@ -77,7 +115,7 @@ include(framework_source.cmake)
 # --------------------------------------------------------------------
 message(STATUS "")
 message(STATUS "✅ CroissantEngine configured successfully.")
-message(STATUS "   Repo root: ${CROISSANT_ROOT_DIR}")
-message(STATUS "   Bin path:  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-message(STATUS "   Output path: ${OUTPUT_DIR}")
-message(STATUS "   Media path:  ${MEDIA_DIR}")
+message(STATUS "   Repo root:  ${CROISSANT_ROOT_DIR}")
+message(STATUS "   Bin path:   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message(STATUS "   Output path:${OUTPUT_DIR}")
+message(STATUS "   Media path: ${MEDIA_DIR}")

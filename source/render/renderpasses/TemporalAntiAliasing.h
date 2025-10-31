@@ -24,7 +24,7 @@
 
 #include <nvrhi/nvrhi.h>
 #include <nvrhi/utils.h>
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <memory>
 #include <core/VFS.h>
 #include <render/backend/DeviceManager.h>

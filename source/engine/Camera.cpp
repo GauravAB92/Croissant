@@ -1,6 +1,6 @@
 #include "Camera.h"
-#include <glm/glm/gtc/quaternion.hpp>
-#include <glm/glm/gtc/constants.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/constants.hpp>
 
 //captures continuous keyboard input and mouse movement
 
