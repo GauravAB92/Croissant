@@ -1,13 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(CroissantEngine VERSION 0.1 LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # --------------------------------------------------------------------
-# Detect standalone vs submodule
+# Detect standalone vs submodule mode
 # --------------------------------------------------------------------
 set(_is_top_level OFF)
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -15,98 +9,112 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 # --------------------------------------------------------------------
-# vcpkg Setup (thirdparty submodule)
+# vcpkg Setup
 # --------------------------------------------------------------------
-set(_vcpkg_root "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/vcpkg")
-set(_vcpkg_toolchain "${_vcpkg_root}/scripts/buildsystems/vcpkg.cmake")
+if(_is_top_level)
+    # ✅ Standalone mode: bootstrap and activate vcpkg
+    include("${CMAKE_CURRENT_SOURCE_DIR}/BootstrapVcpkg.cmake")
 
-# Ensure vcpkg is present
-if(NOT EXISTS "${_vcpkg_toolchain}")
-    message(STATUS "📦 Cloning vcpkg submodule into thirdparty/ ...")
-    execute_process(
-        COMMAND git submodule update --init --recursive thirdparty/vcpkg
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        RESULT_VARIABLE _submodule_result
+    set(CMAKE_TOOLCHAIN_FILE
+        "${VCPKG_TOOLCHAIN_FILE}"
+        CACHE FILEPATH "vcpkg toolchain file" FORCE
     )
-    if(NOT _submodule_result EQUAL 0)
-        message(FATAL_ERROR "❌ Failed to initialize vcpkg submodule (exit ${_submodule_result})")
-    endif()
-endif()
 
-# Bootstrap vcpkg if not yet built
-if(WIN32)
-    set(_vcpkg_exe "${_vcpkg_root}/vcpkg.exe")
-    if(NOT EXISTS "${_vcpkg_exe}")
-        message(STATUS "⚙️ Bootstrapping vcpkg (Windows)...")
-        execute_process(
-            COMMAND cmd /c bootstrap-vcpkg.bat
-            WORKING_DIRECTORY "${_vcpkg_root}"
-            RESULT_VARIABLE _boot_result
-        )
-        if(NOT _boot_result EQUAL 0)
-            message(FATAL_ERROR "❌ Failed to bootstrap vcpkg (exit ${_boot_result})")
-        endif()
-    endif()
+    # Enable manifest mode
+    set(VCPKG_FEATURE_FLAGS "manifests,registries")
+    set(ENV{VCPKG_FEATURE_FLAGS} "manifests,registries")
+    set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(ENV{VCPKG_MANIFEST_DIR} "${VCPKG_MANIFEST_DIR}")
 else()
-    set(_vcpkg_exe "${_vcpkg_root}/vcpkg")
-    if(NOT EXISTS "${_vcpkg_exe}")
-        message(STATUS "⚙️ Bootstrapping vcpkg (Unix)...")
-        execute_process(
-            COMMAND bash ./bootstrap-vcpkg.sh
-            WORKING_DIRECTORY "${_vcpkg_root}"
-            RESULT_VARIABLE _boot_result
-        )
-        if(NOT _boot_result EQUAL 0)
-            message(FATAL_ERROR "❌ Failed to bootstrap vcpkg (exit ${_boot_result})")
+    # ✅ Submodule mode: if vcpkg toolchain wasn’t inherited, inject local prefix manually
+    if(NOT DEFINED CMAKE_PREFIX_PATH OR CMAKE_PREFIX_PATH STREQUAL "")
+        set(_vcpkg_prefix "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/x64-windows/share")
+        if(EXISTS "${_vcpkg_prefix}")
+            message(STATUS "🔧 Submodule mode: adding vcpkg prefix ${_vcpkg_prefix}")
+            list(APPEND CMAKE_PREFIX_PATH "${_vcpkg_prefix}")
+        else()
+            message(WARNING "⚠️ vcpkg prefix not found at ${_vcpkg_prefix}")
         endif()
     endif()
 endif()
 
-# Install dependencies (manifest mode)
-message(STATUS "📦 Ensuring Croissant dependencies are installed...")
-execute_process(
-    COMMAND "${_vcpkg_exe}" install --triplet x64-windows --clean-after-build
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    RESULT_VARIABLE _install_result
-)
-if(NOT _install_result EQUAL 0)
-    message(FATAL_ERROR "❌ vcpkg install failed (exit ${_install_result})")
-endif()
+# --------------------------------------------------------------------
+# Project Definition
+# --------------------------------------------------------------------
+project(CroissantEngine VERSION 0.1 LANGUAGES CXX)
 
-# Use vcpkg toolchain
-set(CMAKE_TOOLCHAIN_FILE "${_vcpkg_toolchain}" CACHE FILEPATH "vcpkg toolchain file" FORCE)
-set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-set(VCPKG_FEATURE_FLAGS "manifests,registries")
+# --------------------------------------------------------------------
+# Global Settings
+# --------------------------------------------------------------------
+set(CROISSANT_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+get_filename_component(CROISSANT_PARENT_DIR "${CROISSANT_ROOT_DIR}" DIRECTORY)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3 /MP")
+endif()
+string(APPEND CMAKE_CXX_FLAGS_DEBUG " -D_DEBUG")
+
+# --------------------------------------------------------------------
+# Output Directories (outside repo)
+# --------------------------------------------------------------------
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CROISSANT_PARENT_DIR}/bin")
+set(OUTPUT_DIR                     "${CROISSANT_PARENT_DIR}/output")
+set(MEDIA_DIR                      "${CROISSANT_PARENT_DIR}/media")
+
+foreach(_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" "${OUTPUT_DIR}" "${MEDIA_DIR}")
+    if(NOT EXISTS "${_dir}")
+        file(MAKE_DIRECTORY "${_dir}")
+    endif()
+endforeach()
+
+# --------------------------------------------------------------------
+# Engine Options
+# --------------------------------------------------------------------
+option(NVRHI_WITH_DX12 "Enable NVRHI DX12 backend" ON)
+option(NVRHI_WITH_DX11 "Enable NVRHI DX11 backend" OFF)
+option(NVRHI_WITH_VULKAN "Enable NVRHI Vulkan backend" OFF)
+option(NVRHI_WITH_AFTERMATH "Enable NVRHI Aftermath support" OFF)
 
 # --------------------------------------------------------------------
 # Debug Info
 # --------------------------------------------------------------------
 message(STATUS "======== vcpkg DEBUG INFO ========")
-message(STATUS "VCPKG_ROOT            = ${_vcpkg_root}")
-message(STATUS "CMAKE_TOOLCHAIN_FILE  = ${CMAKE_TOOLCHAIN_FILE}")
-message(STATUS "VCPKG_MANIFEST_DIR    = ${VCPKG_MANIFEST_DIR}")
+message(STATUS "CMAKE_SOURCE_DIR         = ${CMAKE_SOURCE_DIR}")
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "VCPKG_TOOLCHAIN_FILE     = ${VCPKG_TOOLCHAIN_FILE}")
+message(STATUS "VCPKG_MANIFEST_DIR       = ${VCPKG_MANIFEST_DIR}")
+message(STATUS "CMAKE_PREFIX_PATH        = ${CMAKE_PREFIX_PATH}")
 message(STATUS "==============================")
 
 # --------------------------------------------------------------------
-# Dependencies (via manifest)
+# Dependencies (via vcpkg)
 # --------------------------------------------------------------------
 find_package(glm CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(taskflow CONFIG REQUIRED)
-find_package(tinyxml2 CONFIG REQUIRED)
-find_package(assimp CONFIG REQUIRED)
 
 # --------------------------------------------------------------------
 # Submodules (source-based)
 # --------------------------------------------------------------------
-add_subdirectory(thirdparty/imgui)
-add_subdirectory(thirdparty/implot)
-add_subdirectory(thirdparty/nvrhi)
+add_subdirectory(thirdparty)
+add_subdirectory(nvrhi)
 
 # --------------------------------------------------------------------
 # Framework Source
 # --------------------------------------------------------------------
 include(framework_source.cmake)
 
+# --------------------------------------------------------------------
+# Summary
+# --------------------------------------------------------------------
 message(STATUS "")
 message(STATUS "✅ CroissantEngine configured successfully.")
+message(STATUS "   Repo root:  ${CROISSANT_ROOT_DIR}")
+message(STATUS "   Bin path:   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message(STATUS "   Output path:${OUTPUT_DIR}")
+message(STATUS "   Media path: ${MEDIA_DIR}")
