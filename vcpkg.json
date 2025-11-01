@@ -6,7 +6,6 @@
   "dependencies": [
     "glm",
     "glfw3",
-    "tinyxml2",
     "taskflow"
   ]
 }
