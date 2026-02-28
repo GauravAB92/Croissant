@@ -163,5 +163,3 @@ void CommonRenderPasses::RebuildShaders(DeviceManager* deviceManager, std::share
 	CompileShaderFileNVRHI("shaders/common/rect_vs.hlsl", "main", nvrhi::ShaderType::Vertex, nullptr, deviceManager->GetDevice(), fs, m_RectVS);
 	CompileShaderFileNVRHI("shaders/common/blit_ps.hlsl", "main", nvrhi::ShaderType::Pixel, nullptr, deviceManager->GetDevice(), fs, m_BlitPS);
 }
-
-

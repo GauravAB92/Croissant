@@ -24,12 +24,11 @@ void main_vs(
     o_normalVS = float3(viewNormal.x, viewNormal.y, viewNormal.z);								 // Use the normal as color for this pass
 }
 
-void main_ps(
-	in float4 i_pos : SV_Position,
+void main_ps	(
+	in float4 i_pos 		: SV_Position,
 	in float3 o_normalWS	: COLOR1,
-	in float3 o_normalVS   : COLOR4,
-	out float4 o_color     : SV_Target
-)
+	in float3 o_normalVS    : COLOR4,
+	out float4 o_color      : SV_Target)
 {
 	// directional light source
 	float3 lightDir = float3(1.0f, 1.0f,-50.0f);
@@ -38,9 +37,12 @@ void main_ps(
 	float3 normal 	= normalize(o_normalVS);
 	float diffuse 	= max(dot(normal, lightDir), 0.0f) * 0.74f;
 
-	
 	o_color = float4(diffuse, diffuse, diffuse, 1.0f); // Apply diffuse lighting
-	o_color = pow(o_color,(1.0f/2.2f)); // Apply gamma correction
+	o_color = pow(o_color,(1.0f / 2.2f)); // Apply gamma correction
 	o_color.a = 1.0f; // Set alpha to 1.0
-
 }
+
+
+
+
+

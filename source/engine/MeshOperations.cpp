@@ -159,7 +159,6 @@ namespace croissant
 		}
 	}
 
-
 	uint32_t GetOrCreateMidpoint(
 		Mesh* mesh,
 		std::unordered_map<EdgeKey, uint32_t, EdgeKeyHash>& midpointMap,
@@ -250,7 +249,6 @@ namespace croissant
 			outMesh->indices.push_back(m20);
 		}
 
-
 		GenerateHalfEdgeData(outMesh);
 		GenerateAdjacencyIndices(outMesh);
 
@@ -260,4 +258,15 @@ namespace croissant
 
 		return true;
 	}
+
+	bool MeshOperations::PerfectSquaredSubdivide(const Mesh* inMesh, Mesh* outMesh, int LODLevel)
+	{
+		if (!inMesh || !outMesh) return false;
+
+		int numTargetTriangleCount = LODLevel * LODLevel;
+
+
+		return false;
+	}
+
 }
