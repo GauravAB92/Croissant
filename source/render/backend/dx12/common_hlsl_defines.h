@@ -44,6 +44,9 @@ EdgeDebugData
     uint    intersectionPixelID;                  // 4B
 	uint   _pad3;                                 // 4B
     float4  interceptsAndArea;                    // 16B
+	float4  depthDeltas0; 					      // 16B
+	float4  depthDeltas1;                         // 16B
+	float4  depthDeltas2;                         // 16B
 };
 
 struct  
