@@ -191,4 +191,159 @@ namespace croissant
 
 		return newIdx;
 	}
+
+	bool MeshOperations::PlanarSubdivide(const Mesh* inMesh, Mesh* outMesh)
+	{
+		if (!inMesh || !outMesh) return false;
+		if (inMesh->vertices.empty() || inMesh->indices.empty()) return false;
+
+		// Clear output mesh
+		outMesh->vertices.clear();
+		outMesh->indices.clear();
+		outMesh->halfEdges.clear();
+		outMesh->faces.clear();
+
+		// Copy original vertices
+		outMesh->vertices = inMesh->vertices;
+
+		// Map to store midpoint vertices: edge -> new vertex index
+		// Key: (min_vert, max_vert), Value: new vertex index
+		std::unordered_map<EdgeKey, uint32_t, EdgeKeyHash> midpointMap;
+
+		// Reserve space (rough estimate: 4x triangles, 3x vertices)
+		uint32_t numTriangles = inMesh->indices.size() / 3;
+		outMesh->indices.reserve(numTriangles * 12); // 4 triangles * 3 indices each
+		outMesh->vertices.reserve(inMesh->vertices.size() + numTriangles * 3);
+
+		// Process each triangle
+		for (uint32_t triIdx = 0; triIdx < numTriangles; ++triIdx)
+		{
+			uint32_t v0 = inMesh->indices[triIdx * 3 + 0];
+			uint32_t v1 = inMesh->indices[triIdx * 3 + 1];
+			uint32_t v2 = inMesh->indices[triIdx * 3 + 2];
+
+			// Get or create midpoint vertices
+			uint32_t m01 = GetOrCreateMidpoint(outMesh, midpointMap, v0, v1);
+			uint32_t m12 = GetOrCreateMidpoint(outMesh, midpointMap, v1, v2);
+			uint32_t m20 = GetOrCreateMidpoint(outMesh, midpointMap, v2, v0);
+
+			// Create 4 new triangles (maintain winding order)
+			// Corner triangle 0: v0, m01, m20
+			outMesh->indices.push_back(v0);
+			outMesh->indices.push_back(m01);
+			outMesh->indices.push_back(m20);
+
+			// Corner triangle 1: m01, v1, m12
+			outMesh->indices.push_back(m01);
+			outMesh->indices.push_back(v1);
+			outMesh->indices.push_back(m12);
+
+			// Corner triangle 2: m20, m12, v2
+			outMesh->indices.push_back(m20);
+			outMesh->indices.push_back(m12);
+			outMesh->indices.push_back(v2);
+
+			// Center triangle: m01, m12, m20
+			outMesh->indices.push_back(m01);
+			outMesh->indices.push_back(m12);
+			outMesh->indices.push_back(m20);
+		}
+
+		GenerateHalfEdgeData(outMesh);
+		GenerateAdjacencyIndices(outMesh);
+
+		// Update bounding box
+		outMesh->minBounds = inMesh->minBounds;
+		outMesh->maxBounds = inMesh->maxBounds;
+
+		return true;
+	}
+
+	Vertex LerpVertex(const Vertex& a, const Vertex& b, float t)
+	{
+		Vertex v;
+		v.position = a.position + t * (b.position - a.position);
+		v.normal = glm::normalize(a.normal + t * (b.normal - a.normal));
+		v.uv = a.uv + t * (b.uv - a.uv);
+		return v;
+	}
+
+	bool MeshOperations::LinearSubdivide(const Mesh* inMesh, Mesh* outMesh, uint32_t level)
+	{
+		if (!inMesh || !outMesh) return false;
+		if (inMesh->vertices.empty() || inMesh->indices.empty()) return false;
+		if (level == 0) { return true; }
+
+		outMesh->vertices.clear();
+		outMesh->indices.clear();
+		outMesh->halfEdges.clear();
+		outMesh->faces.clear();
+
+		const uint32_t n = level;
+		const uint32_t numTriangles = inMesh->indices.size() / 3;
+
+		// Each input triangle produces (n+1)(n+2)/2 local verts and n² sub-triangles.
+		// We don't share verts across input triangles here (simple version).
+		outMesh->vertices.reserve(numTriangles * ((n + 1) * (n + 2) / 2));
+		outMesh->indices.reserve(numTriangles * n * n * 3);
+
+		for (uint32_t triIdx = 0; triIdx < numTriangles; ++triIdx)
+		{
+			const Vertex& vA = inMesh->vertices[inMesh->indices[triIdx * 3 + 0]];
+			const Vertex& vB = inMesh->vertices[inMesh->indices[triIdx * 3 + 1]];
+			const Vertex& vC = inMesh->vertices[inMesh->indices[triIdx * 3 + 2]];
+
+			// Build local vertex grid: grid[row][col] -> global vertex index
+			// row in [0..n], col in [0..row]
+			// Stored flat: grid[row * (row+1)/2 + col]
+			const uint32_t gridSize = (n + 1) * (n + 2) / 2;
+			const uint32_t baseIndex = outMesh->vertices.size();
+			outMesh->vertices.resize(baseIndex + gridSize);
+
+			for (uint32_t row = 0; row <= n; ++row)
+			{
+				float tRow = (float)row / n;
+				// Left and right points of this row on edges A->B and A->C
+				Vertex rowLeft = LerpVertex(vA, vB, tRow);
+				Vertex rowRight = LerpVertex(vA, vC, tRow);
+
+				for (uint32_t col = 0; col <= row; ++col)
+				{
+					float tCol = (row == 0) ? 0.f : (float)col / row;
+					uint32_t flatIdx = baseIndex + row * (row + 1) / 2 + col;
+					outMesh->vertices[flatIdx] = LerpVertex(rowLeft, rowRight, tCol);
+				}
+			}
+
+			// Emit triangles using the row/col pattern
+			auto idx = [&](uint32_t row, uint32_t col) -> uint32_t {
+				return baseIndex + row * (row + 1) / 2 + col;
+				};
+
+			for (uint32_t row = 0; row < n; ++row)
+			{
+				for (uint32_t col = 0; col <= row; ++col)
+				{
+					// Upward triangle — always exists
+					outMesh->indices.push_back(idx(row, col));
+					outMesh->indices.push_back(idx(row + 1, col));
+					outMesh->indices.push_back(idx(row + 1, col + 1));	
+
+					// Downward triangle — only when col > 0
+					if (col > 0)
+					{
+						outMesh->indices.push_back(idx(row, col - 1));
+						outMesh->indices.push_back(idx(row + 1, col));
+						outMesh->indices.push_back(idx(row, col));
+					}
+				}
+			}
+		}
+
+		GenerateHalfEdgeData(outMesh);
+		GenerateAdjacencyIndices(outMesh);
+		outMesh->minBounds = inMesh->minBounds;
+		outMesh->maxBounds = inMesh->maxBounds;
+		return true;
+	}
 }

@@ -113,6 +113,9 @@ namespace croissant
 		static bool GenerateHalfEdgeData(Mesh* outMesh);
 		static bool GenerateAdjacencyIndices(Mesh* outMesh);
 		static void ProcessEdge(Mesh* outMesh, std::unordered_map<EdgeKey, EdgeInfo, EdgeKeyHash>& edgeMap, uint32_t fromVert, uint32_t toVert, uint32_t halfEdgeIdx);
+		static bool MeshOperations::LinearSubdivide(const Mesh* inMesh, Mesh* outMesh, uint32_t level);
+		static bool MeshOperations::PlanarSubdivide(const Mesh* inMesh, Mesh* outMesh);
+
 		/// <summary>
 		/// Generates a perfect squared number of triangles by subdividing each triangle based on LOD level squared.
 		/// level 1 = 1 triangle

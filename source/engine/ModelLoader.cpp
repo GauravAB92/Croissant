@@ -8,6 +8,8 @@
 
 namespace croissant
 {
+#define SUBDIV_LINEAR 1
+
 	ModelLoader::ModelLoader(const char* filename, glm::mat4 modelTransform) : m_MatModel(modelTransform)
 	{
 		LoadModel(filename);
@@ -168,31 +170,51 @@ namespace croissant
 			// Process material properties, textures, etc.
 		}
 	}
+
 	bool ModelLoader::GenerateSubdividedMeshes(int levels)
 	{
-		if(!Mesh0)
+		if (!Mesh0)
 		{
 			logger::warning("No base mesh available for subdivision.");
 			return false;
 		}
 
+#if SUBDIV_LINEAR
+		for (int i = 0; i < levels; i++)
+		{
+			std::unique_ptr<Mesh> subdividedMesh = std::make_unique<Mesh>();
+			// Pass i+1 so level 0 = 1 subdivision, level 1 = 4 triangles, etc.
+			// Always subdivides from Mesh0 directly — no chaining needed.
+			if (MeshOperations::LinearSubdivide(Mesh0, subdividedMesh.get(), i + 2))
+			{
+				logger::info("Linear subdivision level %d generated successfully.", i + 1);
+				subdividedMeshes.push_back(std::move(subdividedMesh));
+			}
+			else
+			{
+				logger::warning("Failed to generate linear subdivision level %d.", i + 1);
+				return false;
+			}
+		}
+#else
 		Mesh* firstLevel = Mesh0;
 		for (int i = 0; i < levels; i++)
 		{
 			std::unique_ptr<Mesh> subdividedMesh = std::make_unique<Mesh>();
 			if (MeshOperations::PlanarSubdivide(firstLevel, subdividedMesh.get()))
 			{
-				logger::info("Subdivision level %d generated successfully.", i + 1);
+				logger::info("Planar subdivision level %d generated successfully.", i + 1);
 				subdividedMeshes.push_back(std::move(subdividedMesh));
+				firstLevel = subdividedMeshes.back().get();
 			}
 			else
 			{
-				logger::warning("Failed to generate subdivision level %d.", i + 1);
+				logger::warning("Failed to generate planar subdivision level %d.", i + 1);
 				return false;
 			}
-
-			firstLevel = subdividedMeshes.back().get();
 		}
+#endif
+
 		return true;
 	}
 };
