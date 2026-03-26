@@ -180,11 +180,13 @@ namespace croissant
 		}
 
 #if SUBDIV_LINEAR
+		// Always subdivides from Mesh0 directly
+		// Pass i+1 so level 0 = 1 subdivision, level 1 = 4 triangles, etc.
+
 		for (int i = 0; i < levels; i++)
 		{
 			std::unique_ptr<Mesh> subdividedMesh = std::make_unique<Mesh>();
-			// Pass i+1 so level 0 = 1 subdivision, level 1 = 4 triangles, etc.
-			// Always subdivides from Mesh0 directly — no chaining needed.
+		
 			if (MeshOperations::LinearSubdivide(Mesh0, subdividedMesh.get(), i + 2))
 			{
 				logger::info("Linear subdivision level %d generated successfully.", i + 1);

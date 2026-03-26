@@ -53,6 +53,23 @@ namespace croissant
 		}
 	};
 
+	struct EdgeVertKey
+	{
+		uint32_t v0, v1, step, n;
+		bool operator==(const EdgeVertKey& o) const noexcept {
+			return v0 == o.v0 && v1 == o.v1 && step == o.step && n == o.n;
+		}
+	};
+
+	struct EdgeVertKeyHash
+	{
+		size_t operator()(const EdgeVertKey& k) const {
+			size_t h = k.v0; h ^= k.v1 * 2654435761u; h ^= k.step * 2246822519u; h ^= k.n * 3266489917u;
+			return h;
+		}
+	};
+
+
 	// Helper: Create a unique key for an edge (order-independent)
 	struct EdgeKey
 	{
@@ -128,7 +145,3 @@ namespace croissant
 		/// <returns></returns>
 	};
 };
-
-
-
-

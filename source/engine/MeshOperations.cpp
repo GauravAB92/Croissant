@@ -279,57 +279,108 @@ namespace croissant
 		outMesh->halfEdges.clear();
 		outMesh->faces.clear();
 
+
 		const uint32_t n = level;
 		const uint32_t numTriangles = inMesh->indices.size() / 3;
 
-		// Each input triangle produces (n+1)(n+2)/2 local verts and n² sub-triangles.
-		// We don't share verts across input triangles here (simple version).
-		outMesh->vertices.reserve(numTriangles * ((n + 1) * (n + 2) / 2));
+		std::unordered_map<EdgeVertKey, uint32_t, EdgeVertKeyHash> edgeVertMap;
+		// Max edge verts: 3 edges * (n-1) interior steps per edge * numTriangles / 2 (shared)
+		edgeVertMap.reserve(3 * (n - 1) * numTriangles);
+
+		// Copy original vertices — corners reuse these indices directly
+		outMesh->vertices = inMesh->vertices;
 		outMesh->indices.reserve(numTriangles * n * n * 3);
 
 		for (uint32_t triIdx = 0; triIdx < numTriangles; ++triIdx)
 		{
-			const Vertex& vA = inMesh->vertices[inMesh->indices[triIdx * 3 + 0]];
-			const Vertex& vB = inMesh->vertices[inMesh->indices[triIdx * 3 + 1]];
-			const Vertex& vC = inMesh->vertices[inMesh->indices[triIdx * 3 + 2]];
+			uint32_t i0 = inMesh->indices[triIdx * 3 + 0];
+			uint32_t i1 = inMesh->indices[triIdx * 3 + 1];
+			uint32_t i2 = inMesh->indices[triIdx * 3 + 2];
 
-			// Build local vertex grid: grid[row][col] -> global vertex index
-			// row in [0..n], col in [0..row]
-			// Stored flat: grid[row * (row+1)/2 + col]
+			const Vertex& vA = inMesh->vertices[i0];
+			const Vertex& vB = inMesh->vertices[i1];
+			const Vertex& vC = inMesh->vertices[i2];
+
 			const uint32_t gridSize = (n + 1) * (n + 2) / 2;
-			const uint32_t baseIndex = outMesh->vertices.size();
-			outMesh->vertices.resize(baseIndex + gridSize);
+			std::vector<uint32_t> grid(gridSize);
 
 			for (uint32_t row = 0; row <= n; ++row)
 			{
 				float tRow = (float)row / n;
-				// Left and right points of this row on edges A->B and A->C
 				Vertex rowLeft = LerpVertex(vA, vB, tRow);
 				Vertex rowRight = LerpVertex(vA, vC, tRow);
 
 				for (uint32_t col = 0; col <= row; ++col)
 				{
 					float tCol = (row == 0) ? 0.f : (float)col / row;
-					uint32_t flatIdx = baseIndex + row * (row + 1) / 2 + col;
-					outMesh->vertices[flatIdx] = LerpVertex(rowLeft, rowRight, tCol);
+					uint32_t& gridSlot = grid[row * (row + 1) / 2 + col];
+
+					const bool isCornerA = (row == 0);
+					const bool isCornerB = (row == n && col == 0);
+					const bool isCornerC = (row == n && col == n);
+
+					if (isCornerA) { gridSlot = i0; continue; }
+					if (isCornerB) { gridSlot = i1; continue; }
+					if (isCornerC) { gridSlot = i2; continue; }
+
+					const bool isLeftEdge = (col == 0);             // A->B, step = row
+					const bool isRightEdge = (col == row);           // A->C, step = row
+					const bool isBottomEdge = (row == n);             // B->C, step = col
+
+					if (isLeftEdge || isRightEdge || isBottomEdge)
+					{
+						// Canonical edge direction: always low index -> high index
+						// so two triangles sharing the edge produce the same key
+						uint32_t eV0, eV1, step;
+						if (isLeftEdge) {
+							// A->B, step goes 1..n-1
+							eV0 = i0; eV1 = i1; step = row;
+							if (eV0 > eV1) { std::swap(eV0, eV1); step = n - step; }
+						}
+						else if (isRightEdge) {
+							// A->C, step goes 1..n-1
+							eV0 = i0; eV1 = i2; step = row;
+							if (eV0 > eV1) { std::swap(eV0, eV1); step = n - step; }
+						}
+						else {
+							// B->C, step goes 1..n-1
+							eV0 = i1; eV1 = i2; step = col;
+							if (eV0 > eV1) { std::swap(eV0, eV1); step = n - step; }
+						}
+
+						EdgeVertKey key{ eV0, eV1, step, n };
+						auto it = edgeVertMap.find(key);
+						if (it != edgeVertMap.end()) {
+							gridSlot = it->second;
+						}
+						else {
+							uint32_t newIdx = outMesh->vertices.size();
+							outMesh->vertices.push_back(LerpVertex(rowLeft, rowRight, tCol));
+							edgeVertMap[key] = newIdx;
+							gridSlot = newIdx;
+						}
+					}
+					else
+					{
+						// Interior — always unique
+						gridSlot = outMesh->vertices.size();
+						outMesh->vertices.push_back(LerpVertex(rowLeft, rowRight, tCol));
+					}
 				}
 			}
 
-			// Emit triangles using the row/col pattern
 			auto idx = [&](uint32_t row, uint32_t col) -> uint32_t {
-				return baseIndex + row * (row + 1) / 2 + col;
+				return grid[row * (row + 1) / 2 + col];
 				};
 
 			for (uint32_t row = 0; row < n; ++row)
 			{
 				for (uint32_t col = 0; col <= row; ++col)
 				{
-					// Upward triangle — always exists
 					outMesh->indices.push_back(idx(row, col));
 					outMesh->indices.push_back(idx(row + 1, col));
-					outMesh->indices.push_back(idx(row + 1, col + 1));	
+					outMesh->indices.push_back(idx(row + 1, col + 1));
 
-					// Downward triangle — only when col > 0
 					if (col > 0)
 					{
 						outMesh->indices.push_back(idx(row, col - 1));
@@ -346,4 +397,5 @@ namespace croissant
 		outMesh->maxBounds = inMesh->maxBounds;
 		return true;
 	}
+
 }
