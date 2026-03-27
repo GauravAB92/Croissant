@@ -14,16 +14,19 @@
 #include <algorithm>
 #include <engine/MeshOperations.h>
 
-
-constexpr int MAX_SUBDIVISION_LEVELS = 5;
+#include "Scene.h"
 
 
 namespace croissant
 {
+
+
+	constexpr int MAX_SUBDIVISION_LEVELS = 20;
+
 	class ModelLoader
 	{
 	public:
-		ModelLoader(const char* filename, glm::mat4 modelTranform);
+		ModelLoader(const char* filename, Scene& scene, glm::mat4 modelTransform);
 		~ModelLoader();
 
 		glm::mat4 m_MatModel = glm::mat4(1.0f); // Model matrix for transformations
@@ -31,6 +34,11 @@ namespace croissant
 	private:
 		Assimp::Importer m_Importer;
 		const aiScene* m_Scene = nullptr;
+
+		void LoadScene(const aiScene* sourceScene, Scene& scene);
+		void traverse(const aiScene* sourceScene, Scene& scene, aiNode* node,
+			int parent, int atLevel);
+
 		void LoadModel(const char* filename);
 		void LoadTextures(const aiScene* scene);
 		void LoadMeshes(const aiScene* scene);

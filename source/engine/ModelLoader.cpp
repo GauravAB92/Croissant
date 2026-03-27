@@ -8,16 +8,71 @@
 
 namespace croissant
 {
+
+	inline glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4& from)
+	{
+		glm::mat4 to;
+		to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+		to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+		to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+		to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+		return to;
+	}
+
 #define SUBDIV_LINEAR 1
 
-	ModelLoader::ModelLoader(const char* filename, glm::mat4 modelTransform) : m_MatModel(modelTransform)
+	ModelLoader::ModelLoader(const char* filename, Scene& scene, glm::mat4 modelTransform) : m_MatModel(modelTransform)
 	{
 		LoadModel(filename);
+		LoadScene(m_Scene, scene);
 	}
 	ModelLoader::~ModelLoader()
 	{
 		// Cleanup if necessary
 	}
+
+	// Load the scene hierarchy and associate meshes/materials with nodes
+	void ModelLoader::LoadScene(const aiScene* sourceScene, Scene& scene)
+	{
+
+		traverse(sourceScene, scene, sourceScene->mRootNode, -1, 0);
+	}
+
+	void ModelLoader::traverse(const aiScene* sourceScene, Scene& scene, aiNode* node, int parent, int atLevel)
+	{
+		//Add current node to the scene hierarchy
+		const int newNodeID = scene.addNode(parent, atLevel);
+		if (node->mName.C_Str())
+		{
+			uint32_t stringID = (uint32_t)scene.m_nodeNames.size();
+			scene.m_nodeNames.push_back(node->mName.C_Str());
+			scene.m_nameForNode[newNodeID] = stringID;
+		}
+
+		//Associate meshes with this node
+		for (size_t i = 0; i < node->mNumMeshes; i++)
+		{
+			const int newSubNodeID = scene.addNode(newNodeID, atLevel + 1);
+			const uint32_t stringID = (uint32_t)scene.m_nodeNames.size();
+			scene.m_nodeNames.push_back(node->mName.C_Str() + std::string("_mesh") + std::to_string(i));
+			scene.m_nameForNode[newSubNodeID] = stringID;
+
+			// Associate mesh and material with this sub-node
+			const int mesh = (int)node->mMeshes[i];
+			scene.m_meshForNode[newSubNodeID] = mesh;
+			scene.m_materialForNode[newSubNodeID] = sourceScene->mMeshes[mesh]->mMaterialIndex;
+			scene.m_globalTransforms[newSubNodeID] = glm::mat4(1.0f);
+			scene.m_localTransforms[newSubNodeID] = glm::mat4(1.0f);
+		}
+		scene.m_globalTransforms[newNodeID] = glm::mat4(1.0f);
+		scene.m_localTransforms[newNodeID] = aiMatrix4x4ToGlm(node->mTransformation);
+
+		//Recursively traverse children
+		for (unsigned int n = 0; n < node->mNumChildren; n++)
+		{
+			traverse(sourceScene, scene, node->mChildren[n], newNodeID, atLevel + 1);
+		}
+	} 
 
 	void ModelLoader::LoadModel(const char* filename)
 	{
