@@ -15,11 +15,11 @@
 #include <engine/MeshOperations.h>
 
 
-constexpr int MAX_SUBDIVISION_LEVELS = 5;
-
-
 namespace croissant
 {
+	constexpr int MAX_SUBDIVISION_LEVELS = 30;
+
+
 	class ModelLoader
 	{
 	public:

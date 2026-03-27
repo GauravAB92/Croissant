@@ -279,7 +279,6 @@ namespace croissant
 		outMesh->halfEdges.clear();
 		outMesh->faces.clear();
 
-
 		const uint32_t n = level;
 		const uint32_t numTriangles = inMesh->indices.size() / 3;
 
