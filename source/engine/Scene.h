@@ -35,7 +35,7 @@ namespace croissant
 		std::vector<glm::mat4> m_globalTransforms;
 		std::vector<Hierarchy> m_hierarchy;
 
-		std::unordered_map<uint32_t, uint32_t> m_meshForNode; // node index -> mesh index
+		std::unordered_map<uint32_t, uint32_t> m_meshForNode; // node index -> mesh index (should probably be renamed to geometries)
 		std::unordered_map<uint32_t, uint32_t> m_materialForNode; // mesh index -> material index
 
 		std::unordered_map<uint32_t, uint32_t> m_nameForNode; // node index -> name index
@@ -43,10 +43,6 @@ namespace croissant
 		std::vector<std::string> m_materialNames; // material index -> name string
 
 		std::vector<int> m_changedAtThisFrame[MAX_NODE_LEVEL];
-
-		std::vector<Geometry>			m_geometries;
-		std::vector<Material>			m_materials;
-
 	};
 }
 
