@@ -35,10 +35,9 @@ namespace Croissant
         [[nodiscard]] virtual glm::mat4 GetInverseViewProjectionMatrix(bool includeOffset = true) const = 0;
         [[nodiscard]] virtual nvrhi::Rect GetViewExtent() const = 0;
         [[nodiscard]] virtual glm::vec2 GetPixelOffset() const = 0;
-
     };
 
-
+    
     class View : public IView
     {
     protected:

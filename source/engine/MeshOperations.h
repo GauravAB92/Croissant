@@ -7,18 +7,13 @@
 #include <assimp/LogStream.hpp>
 #include <glm/glm.hpp>
 #include <core/log.h>
+#include <engine/SceneTypes.h>
 
 namespace croissant
 {
 	constexpr uint32_t INVALID = 0xFFFFFFFF;
 
-	//Vertex layout
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-	};
+
 
 	struct HalfEdge; // Forward declaration
 
