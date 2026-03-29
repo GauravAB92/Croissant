@@ -47,15 +47,16 @@ void main_ps (
 	float3 normal 	= normalize(input.normalVS); // Use the normal in view space for lighting calculations
 	float diffuse 	= max(dot(normal, lightDir), 0.0f) * 0.74f;
 
-	// 	o_color 	= float4(diffuse, diffuse, diffuse, 1.0f); // Apply diffuse lighting
-	// 	o_color 	= pow(o_color,(1.0f / 2.2f)); // Apply gamma correction
-	// 	o_color.a 	= 1.0f; // Set alpha to 1.0
+	 	o_color 	= float4(diffuse, diffuse, diffuse, 1.0f); // Apply diffuse lighting
+	 	o_color 	= pow(o_color,(1.0f / 2.2f)); // Apply gamma correction
+	 	o_color.a 	= 1.0f; // Set alpha to 1.0
 	//	o_color     = float4(input.uv.x,input.uv.y,0.0f,1.0f); // Output UV coordinates as color for debugging
 
-	float2 c 		= floor(input.uv * 8.0);
-	float checker 	= fmod(c.x + c.y, 2.0);
-	float3 color 	= lerp(float3(0.2, 0.2, 0.2), float3(0.9, 0.9, 0.9), checker);
-	o_color   		= float4(color , 1.0f); // Output the checker pattern modulated by diffuse lighting
+	// float2 c 		= floor(input.uv * 20.0);
+	// float checker 	= fmod(c.x + c.y, 2.0);
+	// float3 color 	= lerp(float3(0.2, 0.2, 0.2), float3(0.9, 0.9, 0.9), checker);
+	// o_color   		= float4(color , 1.0f); // Output the checker pattern modulated by diffuse lighting
+
 }
 
 void main_wireframe_ps (

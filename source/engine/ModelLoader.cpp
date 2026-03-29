@@ -109,12 +109,12 @@ namespace croissant
 				theMesh->vertices.emplace_back(Vertex{ positions, uvs, normals });
 			}
 
-			for (unsigned int j = 0; j < mesh->mNumFaces; j++)
+			for (uint32_t j = 0; j < mesh->mNumFaces; j++)
 			{
 				const aiFace& face = mesh->mFaces[j];
 				assert(face.mNumIndices == 3); // Ensure the face is a triangle
 
-				for (int k = 0; k < face.mNumIndices; k++)
+				for (uint32_t k = 0; k < face.mNumIndices; k++)
 				{
 					theMesh->indices.push_back(face.mIndices[k]);
 				}

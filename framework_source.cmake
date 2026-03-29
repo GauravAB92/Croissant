@@ -69,9 +69,11 @@ endif()
 # -------------------------------------------------------------------------
 # Framework Source Files
 # -------------------------------------------------------------------------
-set(FRAMEWORK_SOURCE_DIR "${CROISSANT_ROOT_DIR}/source")
-set(THIRDPARTY_DIR       "${CROISSANT_ROOT_DIR}/thirdparty")
-set(NVRHI_DIR            "${CROISSANT_ROOT_DIR}/nvrhi")
+set(FRAMEWORK_SOURCE_DIR    "${CROISSANT_ROOT_DIR}/source")
+set(THIRDPARTY_DIR          "${CROISSANT_ROOT_DIR}/thirdparty")
+set(NVRHI_DIR               "${CROISSANT_ROOT_DIR}/nvrhi")
+set(COMMON_HLSL_DIR         "${CROISSANT_ROOT_DIR}/shaders/common")
+
 
 file(GLOB_RECURSE FRAMEWORK_SRC CONFIGURE_DEPENDS
     "${FRAMEWORK_SOURCE_DIR}/*.h"
@@ -97,6 +99,7 @@ source_group(TREE "${FRAMEWORK_SOURCE_DIR}" FILES ${FRAMEWORK_SRC})
 # -------------------------------------------------------------------------
 target_include_directories(framework_source PUBLIC
     "${FRAMEWORK_SOURCE_DIR}"
+    "${COMMON_HLSL_DIR}"
     "${NVRHI_DIR}/include"
     "${NVRHI_DIR}/thirdparty/DirectX-Headers/include"
     "${NVRHI_DIR}/thirdparty/Vulkan-Headers/include"

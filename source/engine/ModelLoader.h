@@ -17,7 +17,7 @@
 
 namespace croissant
 {
-	constexpr int MAX_SUBDIVISION_LEVELS = 30;
+	constexpr int MAX_SUBDIVISION_LEVELS = 5;
 
 
 	class ModelLoader

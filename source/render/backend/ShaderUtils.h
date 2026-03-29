@@ -48,7 +48,7 @@ static bool CompileShaderFileNVRHIDXC(
 	LPCWSTR targetProfile = L"";
 	switch (shadertype) { 
 	case nvrhi::ShaderType::Vertex:   targetProfile = L"vs_6_0"; break;
-	case nvrhi::ShaderType::Pixel:    targetProfile = L"ps_6_0"; break;
+	case nvrhi::ShaderType::Pixel:    targetProfile = L"ps_6_1"; break;
 	case nvrhi::ShaderType::Geometry: targetProfile = L"gs_6_0"; break;
 	case nvrhi::ShaderType::Hull:     targetProfile = L"hs_6_0"; break;
 	case nvrhi::ShaderType::Domain:   targetProfile = L"ds_6_0"; break;

@@ -34,12 +34,12 @@ namespace croissant
 
 			// Create face
 			Face face;
-			uint32_t he0Idx = outMesh->halfEdges.size();
-			uint32_t he1Idx = he0Idx + 1;
-			uint32_t he2Idx = he0Idx + 2;
+			uint32_t he0Idx = (uint32_t)outMesh->halfEdges.size();
+			uint32_t he1Idx = (uint32_t)he0Idx + 1;
+			uint32_t he2Idx = (uint32_t)he0Idx + 2;
 			face.halfEdges = { he0Idx, he1Idx, he2Idx };
 
-			uint32_t faceIdx = outMesh->faces.size();
+			uint32_t faceIdx = (uint32_t)outMesh->faces.size();
 			outMesh->faces.push_back(face);
 
 			// Create half-edges
@@ -183,7 +183,7 @@ namespace croissant
 		midpoint.uv = (v0.uv + v1.uv) * 0.5f;
 		midpoint.normal = glm::normalize((v0.normal + v1.normal) * 0.5f);
 
-		uint32_t newIdx = mesh->vertices.size();
+		uint32_t newIdx = (uint32_t)mesh->vertices.size();
 		mesh->vertices.push_back(midpoint);
 
 		// Store in map
@@ -211,7 +211,7 @@ namespace croissant
 		std::unordered_map<EdgeKey, uint32_t, EdgeKeyHash> midpointMap;
 
 		// Reserve space (rough estimate: 4x triangles, 3x vertices)
-		uint32_t numTriangles = inMesh->indices.size() / 3;
+		uint32_t numTriangles = (uint32_t)inMesh->indices.size() / 3;
 		outMesh->indices.reserve(numTriangles * 12); // 4 triangles * 3 indices each
 		outMesh->vertices.reserve(inMesh->vertices.size() + numTriangles * 3);
 
@@ -280,7 +280,7 @@ namespace croissant
 		outMesh->faces.clear();
 
 		const uint32_t n = level;
-		const uint32_t numTriangles = inMesh->indices.size() / 3;
+		const uint32_t numTriangles = (uint32_t)inMesh->indices.size() / 3;
 
 		std::unordered_map<EdgeVertKey, uint32_t, EdgeVertKeyHash> edgeVertMap;
 		// Max edge verts: 3 edges * (n-1) interior steps per edge * numTriangles / 2 (shared)
@@ -353,7 +353,7 @@ namespace croissant
 							gridSlot = it->second;
 						}
 						else {
-							uint32_t newIdx = outMesh->vertices.size();
+							uint32_t newIdx = (uint32_t)outMesh->vertices.size();
 							outMesh->vertices.push_back(LerpVertex(rowLeft, rowRight, tCol));
 							edgeVertMap[key] = newIdx;
 							gridSlot = newIdx;
@@ -362,7 +362,7 @@ namespace croissant
 					else
 					{
 						// Interior — always unique
-						gridSlot = outMesh->vertices.size();
+						gridSlot = (uint32_t)outMesh->vertices.size();
 						outMesh->vertices.push_back(LerpVertex(rowLeft, rowRight, tCol));
 					}
 				}
