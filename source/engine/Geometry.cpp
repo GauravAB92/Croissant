@@ -11,21 +11,21 @@ namespace croissant
 				.setFormat(nvrhi::Format::RGB32_FLOAT)
 				.setOffset(0)
 				.setBufferIndex(0)
-				.setElementStride(sizeof(Vertex)),
+				.setElementStride(sizeof(Croissant::Vertex)),
 
 			 nvrhi::VertexAttributeDesc()
 				.setName("UV")
 				.setFormat(nvrhi::Format::RG32_FLOAT)
 				.setOffset(0)
 				.setBufferIndex(1)
-				.setElementStride(sizeof(Vertex)),
+				.setElementStride(sizeof(Croissant::Vertex)),
 
 			nvrhi::VertexAttributeDesc()
 				.setName("NORMAL")
 				.setFormat(nvrhi::Format::RGB32_FLOAT)
 				.setOffset(0)
 				.setBufferIndex(2)
-				.setElementStride(sizeof(Vertex)),
+				.setElementStride(sizeof(Croissant::Vertex)),
 		};
 
 		m_InputLayout = deviceManager->GetDevice()->createInputLayout(attributes, uint32_t(std::size(attributes)), nullptr);
@@ -35,13 +35,13 @@ namespace croissant
 		//Create vertex buffer
 		nvrhi::BufferDesc vertexBufferDesc;
 		vertexBufferDesc.isVertexBuffer = true;
-		vertexBufferDesc.byteSize = m_Mesh->vertices.size() * sizeof(Vertex);
+		vertexBufferDesc.byteSize = m_Mesh->vertices.size() * sizeof(Croissant::Vertex);
 		vertexBufferDesc.debugName = "VertexBuffer";
 		vertexBufferDesc.initialState = nvrhi::ResourceStates::CopyDest;
 		m_VertexBuffer = deviceManager->GetDevice()->createBuffer(vertexBufferDesc);
 
 		commandList->beginTrackingBufferState(m_VertexBuffer, nvrhi::ResourceStates::CopyDest);
-		commandList->writeBuffer(m_VertexBuffer, m_Mesh->vertices.data(), m_Mesh->vertices.size() * sizeof(Vertex));
+		commandList->writeBuffer(m_VertexBuffer, m_Mesh->vertices.data(), m_Mesh->vertices.size() * sizeof(Croissant::Vertex));
 		commandList->setPermanentBufferState(m_VertexBuffer, nvrhi::ResourceStates::VertexBuffer);
 
 		//Create index buffer

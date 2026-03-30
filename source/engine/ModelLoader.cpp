@@ -106,7 +106,7 @@ namespace croissant
 					normals.z = (float)mesh->mNormals[j].z;
 				}
 
-				theMesh->vertices.emplace_back(Vertex{ positions, uvs, normals });
+				theMesh->vertices.emplace_back(Croissant::Vertex{ positions, uvs, normals });
 			}
 
 			for (uint32_t j = 0; j < mesh->mNumFaces; j++)

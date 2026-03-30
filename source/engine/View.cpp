@@ -150,7 +150,7 @@ bool Croissant::View::IsMirrored() const
 glm::vec3 Croissant::View::GetViewOrigin() const
 {
     EnsureCacheIsValid();
-    glm::vec3(m_ViewMatrixInv[3]);
+    return glm::vec3(m_ViewMatrixInv[3]);
 }
 
 glm::vec3 Croissant::View::GetViewDirection() const

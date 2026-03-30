@@ -101,7 +101,7 @@ namespace croissant
 
 	struct Mesh
 	{
-		std::vector<Vertex>       vertices;
+		std::vector<Croissant::Vertex>       vertices;
 		std::vector<uint32_t>     indices;
 		std::vector<uint32_t>	  adjacencyIndices;
 		std::vector<HalfEdge>     halfEdges;

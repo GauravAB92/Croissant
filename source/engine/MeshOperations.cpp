@@ -175,10 +175,10 @@ namespace croissant
 		}
 
 		// Create new midpoint vertex
-		const Vertex& v0 = mesh->vertices[v0Idx];
-		const Vertex& v1 = mesh->vertices[v1Idx];
+		const Croissant::Vertex& v0 = mesh->vertices[v0Idx];
+		const Croissant::Vertex& v1 = mesh->vertices[v1Idx];
 
-		Vertex midpoint;
+		Croissant::Vertex midpoint;
 		midpoint.position = (v0.position + v1.position) * 0.5f;
 		midpoint.uv = (v0.uv + v1.uv) * 0.5f;
 		midpoint.normal = glm::normalize((v0.normal + v1.normal) * 0.5f);
@@ -259,9 +259,9 @@ namespace croissant
 		return true;
 	}
 
-	Vertex LerpVertex(const Vertex& a, const Vertex& b, float t)
+	Croissant::Vertex LerpVertex(const Croissant::Vertex& a, const Croissant::Vertex& b, float t)
 	{
-		Vertex v;
+		Croissant::Vertex v;
 		v.position = a.position + t * (b.position - a.position);
 		v.normal = glm::normalize(a.normal + t * (b.normal - a.normal));
 		v.uv = a.uv + t * (b.uv - a.uv);
@@ -296,9 +296,9 @@ namespace croissant
 			uint32_t i1 = inMesh->indices[triIdx * 3 + 1];
 			uint32_t i2 = inMesh->indices[triIdx * 3 + 2];
 
-			const Vertex& vA = inMesh->vertices[i0];
-			const Vertex& vB = inMesh->vertices[i1];
-			const Vertex& vC = inMesh->vertices[i2];
+			const Croissant::Vertex& vA = inMesh->vertices[i0];
+			const Croissant::Vertex& vB = inMesh->vertices[i1];
+			const Croissant::Vertex& vC = inMesh->vertices[i2];
 
 			const uint32_t gridSize = (n + 1) * (n + 2) / 2;
 			std::vector<uint32_t> grid(gridSize);
@@ -306,8 +306,8 @@ namespace croissant
 			for (uint32_t row = 0; row <= n; ++row)
 			{
 				float tRow = (float)row / n;
-				Vertex rowLeft = LerpVertex(vA, vB, tRow);
-				Vertex rowRight = LerpVertex(vA, vC, tRow);
+				Croissant::Vertex rowLeft = LerpVertex(vA, vB, tRow);
+				Croissant::Vertex rowRight = LerpVertex(vA, vC, tRow);
 
 				for (uint32_t col = 0; col <= row; ++col)
 				{

@@ -7,6 +7,14 @@ struct MaterialConstants;
 
 namespace Croissant
 {
+    //Vertex layout
+    struct Vertex
+    {
+        glm::vec3 position;
+        glm::vec2 uv;
+        glm::vec3 normal;
+    };
+
     enum class TextureAlphaMode
     {
         UNKNOWN = 0,
@@ -25,14 +33,6 @@ namespace Croissant
         std::string path;
         std::string mimeType;
     };
-
-	//Vertex layout
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec2 uv;
-		glm::vec3 normal;
-	};
 
 	enum class VertexAttribute
 	{
