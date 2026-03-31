@@ -43,7 +43,9 @@ static bool CompileShaderFileNVRHIDXC(
 	sourceBuffer.Encoding = DXC_CP_UTF8;                 // FIX: set UTF-8 explicitly
 
 	std::wstring eraaPath = vfs::getExecutablePath().parent_path().wstring() + L"/ERAA_DEMO/shaders/";
-	std::wstring commonPath = vfs::getExecutablePath().parent_path().wstring() + L"/shaders/common";
+	std::wstring commonPath = vfs::getExecutablePath().parent_path().wstring() + L"/Croissant/shaders/common";
+	std::wstring smaaPath = vfs::getExecutablePath().parent_path().wstring() + L"/Croissant/shaders/SMAA";
+	std::wstring fxaaPath = vfs::getExecutablePath().parent_path().wstring() + L"/Croissant/shaders/FXAA";
 
 	LPCWSTR targetProfile = L"";
 	switch (shadertype) { 
@@ -71,6 +73,8 @@ static bool CompileShaderFileNVRHIDXC(
 	arguments.push_back(L"-T"); arguments.push_back(targetProfile);
 	arguments.push_back(L"-I"); arguments.push_back(eraaPath.c_str());
 	arguments.push_back(L"-I"); arguments.push_back(commonPath.c_str());
+	arguments.push_back(L"-I"); arguments.push_back(smaaPath.c_str());
+	arguments.push_back(L"-I"); arguments.push_back(fxaaPath.c_str());
 	arguments.push_back(L"-Zi");
 	arguments.push_back(L"-Qembed_debug");
 	arguments.push_back(L"-HV"); arguments.push_back(L"2021");      // (optional) HLSL 2021

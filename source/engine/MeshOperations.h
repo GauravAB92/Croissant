@@ -13,8 +13,6 @@ namespace croissant
 {
 	constexpr uint32_t INVALID = 0xFFFFFFFF;
 
-
-
 	struct HalfEdge; // Forward declaration
 
 	struct Face

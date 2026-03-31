@@ -41,7 +41,7 @@ TemporalAntiAliasingPass::TemporalAntiAliasingPass(nvrhi::IDevice* device, std::
 	}
 
 	//Compile motion vector shader
-	CompileShaderFileNVRHI("shaders/TAA/motion_vector_generator_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_MotionVectorPS);
+	CompileShaderFileNVRHI("shaders/TAA/motion_vector_generator_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_MotionVectorCS);
 
 	//Compile taa resolve compute shader
 	CompileShaderFileNVRHI("shaders/TAA/taa_resolve_cs.hlsl", "main_cs", nvrhi::ShaderType::Compute, nullptr, device, fs, m_TemporalAntiAliasingCS);
@@ -55,13 +55,23 @@ TemporalAntiAliasingPass::TemporalAntiAliasingPass(nvrhi::IDevice* device, std::
 	m_ResolvedColorSize = vec2(float(resolvedColorDesc.width), float(resolvedColorDesc.height));			//Dimensions of the resolved color texture
 
 
-	nvrhi::BufferDesc constantBufferDesc;
-	constantBufferDesc.byteSize = sizeof(TemporalAntiAliasingConstants);
-	constantBufferDesc.debugName = "TemporalAntiAliasingConstants";
-	constantBufferDesc.isConstantBuffer = true;
-	constantBufferDesc.isVolatile = true;
-	constantBufferDesc.maxVersions = params.numConstantBufferVersions;
-	m_TemporalAntiAliasingCB = device->createBuffer(constantBufferDesc);
+	{
+		nvrhi::BufferDesc constantBufferDesc;
+		constantBufferDesc.byteSize = sizeof(TemporalAntiAliasingConstants);
+		constantBufferDesc.debugName = "TemporalAntiAliasingConstants";
+		constantBufferDesc.isConstantBuffer = true;
+		constantBufferDesc.isVolatile = true;
+		constantBufferDesc.maxVersions = params.numConstantBufferVersions;
+		m_TemporalAntiAliasingCB = device->createBuffer(constantBufferDesc);
+	}
+
+	{
+		nvrhi::BufferDesc constantBufferDesc;
+		constantBufferDesc.byteSize = sizeof(MVConstants);
+		constantBufferDesc.debugName = "MotionVectorConstants";
+		constantBufferDesc.isConstantBuffer = true;
+		m_MVConstantsCB = device->createBuffer(constantBufferDesc);
+	}
 
 	{
 		nvrhi::BindingSetDesc bindingSetDesc;
@@ -99,10 +109,70 @@ TemporalAntiAliasingPass::TemporalAntiAliasingPass(nvrhi::IDevice* device, std::
 		pipelineDesc.bindingLayouts = { m_ResolveBindingLayout };
 		m_ResolvePSO = device->createComputePipeline(pipelineDesc);
 	}
+
+	//Motion vector binding layout and PSO
+	{
+		nvrhi::BindingLayoutDesc bindingLayoutDesc;
+		bindingLayoutDesc.visibility = nvrhi::ShaderType::Compute;
+		bindingLayoutDesc.bindings =
+		{
+			nvrhi::BindingLayoutItem::ConstantBuffer(0),
+			nvrhi::BindingLayoutItem::Texture_SRV(0),
+			nvrhi::BindingLayoutItem::Texture_UAV(0)
+		};
+		//if (useStencil)
+		//{
+		//	bindingSetDesc.bindings.push_back(nvrhi::BindingSetItem::Texture_SRV(1, params.sourceDepth));
+		//}
+		m_MotionVectorBindingLayout = device->createBindingLayout(bindingLayoutDesc);
+
+		nvrhi::ComputePipelineDesc pipelineDesc;
+		pipelineDesc.CS = m_MotionVectorCS;
+		pipelineDesc.bindingLayouts = { m_MotionVectorBindingLayout };
+
+		m_MotionVectorPSO = device->createComputePipeline(pipelineDesc);
+	}
 }
 
-void TemporalAntiAliasingPass::RenderMotionVectors(nvrhi::ICommandList* commandList, vec3 preViewTranslationDifference)
+void TemporalAntiAliasingPass::RenderMotionVectors(DeviceManager* deviceManager, nvrhi::ICommandList* commandList, nvrhi::TextureHandle sourceDepth,
+	nvrhi::TextureHandle motionVectorsTexture,
+	glm::mat4 reprojectionMatrix) // Reprojection matrix is currentInvViewProj x prevViewProj
 {
+	const nvrhi::TextureDesc& depthDesc = sourceDepth.Get()->getDesc();
+
+	commandList->beginMarker("Motion Vector Generation");
+
+	//Fill constant buffer
+	MVConstants mvConstants;
+	mvConstants.reprojectionMatrix = reprojectionMatrix;
+	mvConstants.inputViewSize = float2(depthDesc.width, depthDesc.height);
+	mvConstants.inputViewOrigin = float2(0.0f, 0.0f);
+
+	commandList->writeBuffer(m_MVConstantsCB, &mvConstants, sizeof(mvConstants));
+
+	//Create binding set
+	{
+		nvrhi::BindingSetDesc bindingSetDesc;
+		bindingSetDesc.bindings =
+		{
+			nvrhi::BindingSetItem::ConstantBuffer(0, m_MVConstantsCB),
+			nvrhi::BindingSetItem::Texture_SRV(0, sourceDepth),
+			nvrhi::BindingSetItem::Texture_UAV(0, motionVectorsTexture)
+		};
+
+		if (!nvrhi::utils::CreateBindingSetAndLayout(deviceManager->GetDevice(), nvrhi::ShaderType::Compute, 0, bindingSetDesc, m_MotionVectorBindingLayout, m_MotionVectorBindingSet))
+		{
+			MessageBoxA(nullptr, "Couldn't create the binding set or layout for MVs", "Error", MB_OK | MB_ICONERROR);
+		}
+	}
+
+	auto state = nvrhi::ComputeState();
+	state.pipeline = m_MotionVectorPSO;
+	state.bindings = { m_MotionVectorBindingSet };
+	commandList->setComputeState(state);
+	int2 groupCount = int2((depthDesc.width + 15) / 16, (depthDesc.height + 15) / 16);
+	commandList->dispatch(groupCount.x, groupCount.y, 1);
+	commandList->endMarker();
 }
 
 /// <summary>

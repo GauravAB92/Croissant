@@ -48,6 +48,14 @@ enum class TemporalAntiAliasingJitter
 	Whitenoise
 };
 
+struct MVConstants
+{
+	mat4 reprojectionMatrix;
+	float2  inputViewSize;
+	float2  inputViewOrigin;
+	float2  _pad;
+};
+
 struct TemporalAntiAliasingParameters
 {
 	float newFrameWeight = 0.1f; // Weight for the new frame in the blend
@@ -66,14 +74,15 @@ class TemporalAntiAliasingPass
 	std::shared_ptr<CommonRenderPasses> m_CommonRenderPasses;
 	std::shared_ptr<RootFileSystem> m_RootFileSystem;
 
-	nvrhi::ShaderHandle  m_MotionVectorPS;
+	nvrhi::ShaderHandle  m_MotionVectorCS;
 	nvrhi::ShaderHandle  m_TemporalAntiAliasingCS;
 	nvrhi::SamplerHandle m_BilinearSampler;
 	nvrhi::BufferHandle  m_TemporalAntiAliasingCB;
+	nvrhi::BufferHandle  m_MVConstantsCB;
 
 	nvrhi::BindingLayoutHandle		m_MotionVectorBindingLayout;
 	nvrhi::BindingSetHandle			m_MotionVectorBindingSet;	
-	nvrhi::GraphicsPipelineHandle	m_MotionVectorPSO;
+	nvrhi::ComputePipelineHandle	m_MotionVectorPSO;
 
 	nvrhi::BindingLayoutHandle	 m_ResolveBindingLayout;
 	nvrhi::BindingSetHandle		 m_ResolveBindingSet;
@@ -113,8 +122,9 @@ public:
 		std::shared_ptr<RootFileSystem> fs);
 
 	void RenderMotionVectors(
-		nvrhi::ICommandList* commandList,
-		vec3 preViewTranslationDifference = vec3(0.0f,0.0f,0.0f));
+		DeviceManager* deviceManager, nvrhi::ICommandList* commandList,
+		nvrhi::TextureHandle sourceDepth, nvrhi::TextureHandle motionVectorsTexture,
+		glm::mat4 reprojectionMatrix);
 
 	void Resolve(
 		nvrhi::ICommandList* commandList,
